@@ -1,0 +1,212 @@
+-------------------------------------------------------------------------------------------------------
+      name:  <unnamed>
+       log:  C:\Users\jcrechet\Dropbox\Research\Data\Replication\Forsythe 2021\Replication_games\Logfil
+> es/0b_laus_data.log
+  log type:  text
+ opened on:  23 Jun 2023, 16:04:41
+
+. 
+. 
+. ****
+. ****
+. 
+. ** Crosswalk
+. 
+. * LAUS codes 
+. import delimited Data\LAUS\la.area.txt, clear 
+(6 vars, 8,381 obs)
+
+. keep if area_type_code == "A"
+(8,329 observations deleted)
+
+. gen state = lower( area_text )
+
+. rename area_code laus_code
+
+. keep laus_code state
+
+. save Data\temp.dta, replace 
+(note: file Data\temp.dta not found)
+file Data\temp.dta saved
+
+. 
+. * FIPS codes
+. import delimited Data\IPUMS_CPS\fipcode_cps.txt, delimiter(tab) clear 
+(2 vars, 51 obs)
+
+. rename v1 statefip 
+
+. rename v2 state 
+
+. 
+. * merge 
+. merge 1:1 state using Data\temp.dta
+
+    Result                           # of obs.
+    -----------------------------------------
+    not matched                             1
+        from master                         0  (_merge==1)
+        from using                          1  (_merge==2)
+
+    matched                                51  (_merge==3)
+    -----------------------------------------
+
+. drop _merge 
+
+. sort statefip
+
+. order statefip state laus_code
+
+. replace statefip = 72 if state == "puerto rico" 
+(1 real change made)
+
+. save Data\state_crosswalk.dta, replace 
+file Data\state_crosswalk.dta saved
+
+. 
+. 
+. ****
+. ****
+. 
+. 
+. ** Convert in Stata format
+. 
+. * Import LAUS data
+. import delimited "Data\LAUS\la.data.2.AllStatesU.txt", delimiter(whitespace, collapse) clear 
+(5 vars, 222,015 obs)
+
+. 
+. * LAUS area codes
+. gen laus_code = substr(series_id,4,15)
+
+. 
+. * measure code
+. gen measure = substr(series_id,-2,2)
+
+. 
+. * States and FIPS codes  
+. merge m:1 laus_code using Data/state_crosswalk
+
+    Result                           # of obs.
+    -----------------------------------------
+    not matched                             0
+    matched                           222,015  (_merge==3)
+    -----------------------------------------
+
+. drop _merge
+
+. 
+. * destring and rename month variable
+. drop if period == "M13" // drop yearly average
+(16,967 observations deleted)
+
+. rename period month
+
+. replace month = subinstr(month,"M","",1)
+(205,048 real changes made)
+
+. destring month, replace
+month: all characters numeric; replaced as byte
+
+. 
+. * destring values
+. replace value = "" if footnote == "N" // recode missings
+(8 real changes made)
+
+. destring value, replace
+value: all characters numeric; replaced as double
+(8 missing values generated)
+
+. 
+. * destring measure and label values
+. destring measure, replace
+measure: all characters numeric; replaced as byte
+
+. label define lab 3 "unemployment rate" 4 "unemployment" 5 "employment" 6 "labor force" ///
+>                                  7 "employment-population ratio" 8 "labor force participation rate" 9
+>  "civilian noninstitutional population"
+
+. label values measure lab
+
+. label drop lab
+
+.                                                 
+. * sort, order
+. sort statefip measure year month
+
+. order statefip state year month measure value measure footnote laus_code series_id
+
+. 
+. * save data
+. save Data/laus_state, replace
+file Data/laus_state.dta saved
+
+. 
+. * data in wide format
+. drop laus_code series_id footnote
+
+. reshape wide value, i(statefip year month) j(measure)
+(note: j = 3 4 5 6 7 8 9)
+
+Data                               long   ->   wide
+-----------------------------------------------------------------------------
+Number of obs.                   205048   ->   29536
+Number of variables                   6   ->      11
+j variable (7 values)           measure   ->   (dropped)
+xij variables:
+                                  value   ->   value3 value4 ... value9
+-----------------------------------------------------------------------------
+
+. rename value3 unemp_rate
+
+. rename value4 unemp
+
+. rename value5 emp
+
+. rename value6 lab_force
+
+. rename value7 emp_pop
+
+. rename value8 part_rate
+
+. rename value9 pop
+
+. 
+. * variable labels
+. label var unemp_rate    "unemployment rate" 
+
+. label var unemp                 "unemployment" 
+
+. label var emp                   "employment" 
+
+. label var lab_force     "labor force" 
+
+. label var emp_pop               "employment-population ratio" 
+
+. label var part_rate     "labor force participation rate" 
+
+. label var pop                   "civilian noninstitutional population"
+
+. 
+. * save
+. order statefip state year month
+
+. sort statefip year month
+
+. save Data/laus_state_wide, replace
+file Data/laus_state_wide.dta saved
+
+. 
+. * cleanup
+. erase Data\temp.dta
+
+. 
+. **
+. 
+. log close
+      name:  <unnamed>
+       log:  C:\Users\jcrechet\Dropbox\Research\Data\Replication\Forsythe 2021\Replication_games\Logfil
+> es/0b_laus_data.log
+  log type:  text
+ closed on:  23 Jun 2023, 16:04:52
+-------------------------------------------------------------------------------------------------------

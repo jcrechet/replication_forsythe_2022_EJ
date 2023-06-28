@@ -1,0 +1,22 @@
+{
+\def\sym#1{\ifmmode^{#1}\else\(^{#1}\)\fi}
+\begin{tabular}{l*{3}{c}}
+\hline\hline
+                                   &\multicolumn{1}{c}{(1)}&\multicolumn{1}{c}{(2)}&\multicolumn{1}{c}{(3)}\\
+\hline
+10 years and less                  &       2.696\sym{***}&       6.863\sym{***}&       9.573\sym{***}\\
+                                   &    (0.0872)         &     (0.651)         &     (0.358)         \\
+[1em]
+more than 10 years $\times$ urate  &      0.0316\sym{***}&      -1.515\sym{***}&      0.0320         \\
+                                   &   (0.00733)         &     (0.121)         &    (0.0268)         \\
+[1em]
+10 years and less $\times$ urate   &      -0.149\sym{***}&      -1.968\sym{***}&      -0.538\sym{***}\\
+                                   &    (0.0112)         &     (0.114)         &    (0.0281)         \\
+\hline
+Observations                       &    10855855         &      646647         &     5230936         \\
+\(R^{2}\)                          &       0.004         &       0.035         &       0.022         \\
+\hline\hline
+\multicolumn{4}{l}{\footnotesize Standard errors in parentheses}\\
+\multicolumn{4}{l}{\footnotesize \sym{*} \(p<0.05\), \sym{**} \(p<0.01\), \sym{***} \(p<0.001\)}\\
+\end{tabular}
+}

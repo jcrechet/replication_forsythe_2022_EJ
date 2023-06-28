@@ -1,0 +1,2444 @@
+-----------------------------------------------------------------------------------------------------
+      name:  <unnamed>
+       log:  C:\Users\jcrechet\Dropbox\Research\Data\Replication\Forsythe 2021\Replication_games\Logf
+> iles/2_hiring.log
+  log type:  text
+ opened on:  25 Jun 2023, 11:23:08
+
+. 
+. * data
+. use Data/final_dataset, clear
+
+. 
+. * options for regressions with fixed effects
+. set matsize 2000
+
+. set emptycells drop
+
+. 
+. * command to update/install estout package if needed
+. ssc install estout, replace
+checking estout consistency and verifying not already installed...
+all files already exist and are up to date.
+
+. 
+. **
+. 
+. * Initialize macro and variables
+. 
+. * variable for clustering
+. gen clust_var = statefip
+
+. 
+. * variable for geo fixed effect
+. gen geo_fe = statefip
+
+.         
+. * macro label for geographic fe unit
+. global geo "State"
+
+.         
+. * latex path for tables
+. global table_path = "$latex_path\Tables"
+
+. 
+. 
+. forvalues step = 1(1)3 {
+  2. 
+. di " "
+  3. di "****************"
+  4. di " "
+  5. di "Step `step'" 
+  6. di " "
+  7. di "****************"
+  8. di " "
+  9. 
+. * step 1: regression with initial sample in paper (1994-2014)
+. 
+. * step 2: run regression with our sample (1994-2019) 
+. if `step' == 2 {
+ 10.                 
+.         * update sample
+.         replace sample = sample_2019
+ 11.         drop sample_2019
+ 12. 
+.         * latex path
+.         global table_path = "$latex_path\Tables\2019"
+ 13.         
+.         * string for latex table label
+.         global tab_lbl = "2019"
+ 14. 
+. }
+ 15. 
+. **
+. 
+. * step 3: use MSA variation instead of State
+. if `step' == 3 {
+ 16. 
+.         * update sample
+.         replace sample = (sample & urate_msa != .)
+ 17.         
+.         * update unemp. variable
+.         replace urate = urate_msa
+ 18.         drop urate_msa
+ 19.         
+.         * update variable for geo fixed effect
+.         replace geo_fe = metarea
+ 20.         
+.         * update variable for clustering (msa instead of state)
+.         replace clust_var = metarea
+ 21.         
+.         * geographic unit label
+.         global geo "MSA"
+ 22.         
+.         * latex path
+.         global table_path = "$latex_path\Tables\MSA"
+ 23.         
+.         * string for latex table label
+.         global tab_lbl = "MSA"
+ 24. 
+. }
+ 25. 
+. di " "
+ 26. di "latex path for tables:"
+ 27. di "$table_path"
+ 28. di " "
+ 29. 
+. 
+. **
+. 
+. * Table 1
+. 
+. * Panel A
+. eststo  clear
+ 30. 
+. * col (1)
+. eststo: quietly reg d_hired urate [w=weights] if sample, vce(cluster clust_var) // no fixed effect
+ 31. 
+. * col (2)
+. eststo: quietly reg d_hired urate i.geo_fe [w=weights] if sample, vce(cluster clust_var) // state f
+> e
+ 32. 
+. * col (3)
+. eststo: quietly reg d_hired urate i.geo_fe i.demographic [w=weights] if sample, vce(cluster clust_v
+> ar) // state demographic fe
+ 33.         
+. * col (4)
+. eststo: quietly reg d_hired urate i.geo_fe i.demographic i.date [w=weights] if sample, vce(cluster 
+> clust_var) // state/demographic/date
+ 34. 
+. * Stata table
+. esttab, keep(urate) se r2 nomtitles label varwidth(35) ///
+>                 indicate("`geo' fixed effect = *.geo_fe" "Demographic fixed effect = *.demographic"
+>  "Month-year fixed effect = *.date")
+ 35.                                                                                 
+. * latex table
+. esttab using "$table_path\table1a.tex", replace keep(urate) se r2 nomtitles label varwidth(35) ///
+>            indicate("State fixed effect = *.geo_fe" "Demographic fixed effect = *.demographic" "Mon
+> th-year fixed effect = *.date") ///
+>            title("Hiring over the Business Cycle: With and Without Controls - Aggregate effect \lab
+> el{table1a:$tab_lbl}") nomtitles
+ 36.                                                                         
+. 
+. * Panel B
+. eststo  clear
+ 37. local variables = "i1.exp_group c.urate#i1.exp_group c.urate#i0.exp_group"
+ 38. 
+. * col (1)
+. eststo: quietly reg d_hired `variables' [w=weight] if sample, vce(cluster clust_var)
+ 39. 
+. * col (2)
+. eststo: quietly reg d_hired `variables' i.geo_fe [w=weight] if sample, vce(cluster clust_var)
+ 40. 
+. * col (3)
+. eststo: quietly reg d_hired `variables' i.geo_fe i.demographic [w=weight] if sample, vce(cluster cl
+> ust_var)
+ 41. 
+. * col (4)
+. eststo: quietly reg d_hired `variables' i.geo_fe i.demographic i.date [w=weight] if sample, vce(clu
+> ster clust_var)
+ 42. 
+. * Stata table
+. esttab, keep(*.exp_group*) se r2 nomtitles label varwidth(35) order(1.exp_group 1.exp_group#c.urate
+>  0.exp_group#c.urate) ///
+>                 indicate("`geo' fixed effect = *.geo_fe" "Demographic fixed effect = *.demographic"
+>  "Month-year fixed effect = *.date")
+ 43.                                                                                 
+. * latex table
+. esttab using "$table_path\table1b.tex", replace keep(*.exp_group*) se r2 nomtitles label ///
+>            varwidth(35) order(1.exp_group 1.exp_group#c.urate 0.exp_group#c.urate) interaction(" $\
+> times$ ") ///                
+>            indicate("State fixed effect = *.geo_fe" "Demographic fixed effect = *.demographic" "Mon
+> th-year fixed effect = *.date") ///
+>            title("Hiring over the Business Cycle: With and Without Controls - Disaggregated by pote
+> ntial experience \label{table1b:$tab_lbl}") booktabs ///
+>                                                                                 
+ 44. **
+.                          
+.                                          
+. * Table B2
+. 
+. * detailed experience cat.
+. gen exp_cat = exp_neg_val + 1 if exp_neg_val >= 0 & exp_neg_val < 10
+ 45. 
+. replace exp_cat = 0 if exp_neg_val < 0
+ 46. 
+. replace exp_cat = 1014 if exp_neg_val >= 10 & exp_neg_val < 15
+ 47. replace exp_cat = 1519 if exp_neg_val >= 15 & exp_neg_val < 20
+ 48. replace exp_cat = 2024 if exp_neg_val >= 20 & exp_neg_val < 25
+ 49. replace exp_cat = 2529 if exp_neg_val >= 25 & exp_neg_val < 30
+ 50. replace exp_cat = 3034 if exp_neg_val >= 30 & exp_neg_val < 35
+ 51. replace exp_cat = 3539 if exp_neg_val >= 35 & exp_neg_val < 40
+ 52. replace exp_cat = 4044 if exp_neg_val >= 40 & exp_neg_val < 45
+ 53. replace exp_cat = 9999 if exp_neg_val >= 45 & exp_neg_val != .
+ 54. 
+. * label values
+. #delimit ;
+delimiter now ;
+.         label define exp_cat_lab  0 "PE < 0" 1 "PE = 0" 2 "PE = 1" 3 "PE = 2" 4 "PE = 3" 5 "PE = 4"
+>      
+>                                                           6 "PE = 5" 7 "PE = 6" 8 "PE = 7" 9 "PE = 
+> 8" 10 "PE = 9"
+>                                                           1014 "10 $\leq$ PE < 15" 1519 "15 $\leq$ 
+> PE < 19"
+>                                                           2024 "20 $\leq$ PE < 24" 2529 "25 $\leq$ 
+> PE < 29"
+>                                                           3034 "30 $\leq$ PE < 34" 3539 "35 $\leq$ 
+> PE < 39"
+>                                                           4044 "40 $\leq$ PE < 44" 9999 "PE $\geq$ 
+> 45";
+ 55.           #delimit cr
+delimiter now cr
+. label val exp_cat exp_cat_lab 
+ 56. tab exp_cat
+ 57. 
+. * check
+. by exp_cat, sort: tab exp_neg_val, miss
+ 58. count if exp_cat == . & exp_neg_val != .
+ 59. sort cpsidp date
+ 60. 
+. * regression
+. eststo  clear
+ 61. local variables = "ibn.exp_cat c.urate#ibn.exp_cat i.geo_fe i.demographic i.date"
+ 62. 
+. eststo: quietly reg d_hired `variables' [w=weight] if sample, noconstant vce(cluster clust_var)
+ 63. estadd local samp "All"
+ 64. 
+. eststo: quietly reg d_hired `variables' [w=weight] if sample & (L.empstat>=10 & L.empstat<=12), noc
+> onstant vce(cluster clust_var)
+ 65. estadd local samp "Employed"
+ 66. 
+. eststo: quietly reg d_hired `variables' [w=weight] if sample & (L.empstat>=21 & L.empstat<=22), noc
+> onstant vce(cluster clust_var)
+ 67. estadd local samp "Unemployed"
+ 68. 
+. eststo: quietly reg d_hired `variables' [w=weight] if sample & (L.empstat>=32 & L.empstat<=36), noc
+> onstant vce(cluster clust_var)
+ 69. estadd local samp "NILF"
+ 70. 
+. * stata table
+. esttab, keep(*.exp_cat#*) se stat(samp r2 N, label("Sample")) nomtitles label varwidth(40) interact
+> ion(" X ") 
+ 71. 
+. * latex table
+. esttab using "$table_path\tableb2.tex", replace keep(*.exp_cat#*) se stat(samp r2 N, label("Sample"
+>  "$ R^2 $")) label nomtitles  ///
+>            interaction(" $\times$ ") varwidth(40) title("Hiring Over the Business Cycle: Detailed P
+> otential Experience Categories \label{tableB2:$tab_lbl}") booktabs
+ 72.            
+. drop exp_cat
+ 73. label drop exp_cat_lab
+ 74.                                                                         
+. **
+. 
+. 
+. * Table 2
+. eststo  clear
+ 75. local variables = "i1.exp_group c.urate#i1.exp_group c.urate#i0.exp_group i.geo_fe i.demographic
+>  i.date"
+ 76. 
+. eststo: quietly reg d_hired `variables' [w=weight] if sample, vce(cluster clust_var)
+ 77. quiet test c.urate#i1.exp_group = c.urate#i0.exp_group
+ 78. estadd local samp "All"
+ 79. estadd scalar w = r(F)
+ 80. 
+. eststo: quietly reg d_hired `variables' [w=weight] if sample & (L.empstat>=10 & L.empstat<=12), vce
+> (cluster clust_var)
+ 81. quiet test c.urate#i1.exp_group = c.urate#i0.exp_group
+ 82. estadd local samp "Employed"
+ 83. estadd scalar w = r(F)
+ 84. 
+. eststo: quietly reg d_hired `variables' [w=weight] if sample & (L.empstat>=21 & L.empstat<=22), vce
+> (cluster clust_var)
+ 85. quiet test c.urate#i1.exp_group = c.urate#i0.exp_group
+ 86. estadd local samp "Unemployed"
+ 87. estadd scalar w = r(F)
+ 88. 
+. eststo: quietly reg d_hired `variables' [w=weight] if sample & (L.empstat>=32 & L.empstat<=36), vce
+> (cluster clust_var)
+ 89. quiet test c.urate#i1.exp_group = c.urate#i0.exp_group
+ 90. estadd local samp "NILF"
+ 91. estadd scalar w = r(F)
+ 92. 
+. * Stata table
+. esttab, keep(*.exp_group*) se stats(samp w r2 N, label("Sample" "Wald test")) ///
+>                 nomtitles label varwidth(35) order(1.exp_group 1.exp_group#c.urate 0.exp_group#c.ur
+> ate) interaction(" X ")
+ 93. 
+. * latex table
+. esttab using "$table_path\table2.tex", replace keep(*.exp_group*) se stats(samp w r2 N, label("Samp
+> le" "Wald test" "$ R^2 $")) ///
+>            nomtitles label varwidth(35) order(1.exp_group 1.exp_group#c.urate 0.exp_group#c.urate) 
+> interaction(" $\times$ ") ///
+>            title("Hiring over the Business Cycle: Young and Experienced \label{table2:$tab_lbl}") b
+> ooktabs
+ 94.                                         
+.                                         
+. **
+. 
+. 
+. * Table 3
+. 
+. * gen dep variables
+. 
+. * employment exit (to all)
+. gen d_exit = 0 if (L.empstat >= 10 & L.empstat <= 12)
+ 95. replace d_exit = 100 if (empstat >= 10 & empstat <= 12) & (L.empstat >= 10 & L.empstat <= 12) & 
+> empsame == 1
+ 96. replace d_exit = 100 if (empstat >= 21 & empstat <= 36) & (L.empstat >= 10 & L.empstat <= 12)
+ 97. 
+. * employment transition to unem
+. gen d_eu = 0 if (L.empstat >= 10 & L.empstat <= 12)
+ 98. replace d_eu = 100 if (empstat >= 21 & empstat <= 22) & (L.empstat >= 10 & L.empstat <= 12)
+ 99. 
+. * emp to emp
+. gen d_ee = 0 if (L.empstat >= 10 & L.empstat <= 12)
+100. replace d_ee = 100 if (empstat >= 10 & empstat <= 12) & (L.empstat >= 10 & L.empstat <= 12) & em
+> psame == 1
+101. 
+. * emp to nilf
+. gen d_en = 0 if (L.empstat >= 10 & L.empstat <= 12)
+102. replace d_en = 100 if (empstat >= 32 & empstat <= 36) & (L.empstat >= 10 & L.empstat <= 12)
+103. 
+. * nilf to unem
+. gen d_nu = 0 if (L.empstat >= 32 & L.empstat <= 36)
+104. replace d_nu = 100 if (empstat >= 21 & empstat <= 22) & (L.empstat >= 32 & L.empstat <= 36)
+105. 
+. * unem to nilf
+. gen d_un = 0 if (L.empstat >= 21 & L.empstat <= 22)
+106. replace d_un = 100 if (empstat >= 32 & empstat <= 36) & (L.empstat >= 21 & L.empstat <= 22)
+107. 
+. * regressions
+. eststo  clear
+108. 
+. eststo: quiet reg d_exit i1.exp_group c.urate#i1.exp_group c.urate#i0.exp_group i.geo_fe i.demograp
+> hic i.date if sample, vce(cluster clust_var)
+109. quiet test c.urate#i1.exp_group = c.urate#i0.exp_group
+110. estadd local samp "Employed"
+111. estadd local dest "All"
+112. estadd scalar w = r(F)
+113. 
+. eststo: quiet reg d_eu i1.exp_group c.urate#i1.exp_group c.urate#i0.exp_group i.geo_fe i.demographi
+> c i.date if sample, vce(cluster clust_var)
+114. quiet test c.urate#i1.exp_group = c.urate#i0.exp_group
+115. estadd local samp "Employed"
+116. estadd local dest "Unemp."
+117. estadd scalar w = r(F)
+118. 
+. eststo: quiet reg d_ee i1.exp_group c.urate#i1.exp_group c.urate#i0.exp_group i.geo_fe i.demographi
+> c i.date if sample, vce(cluster clust_var)
+119. quiet test c.urate#i1.exp_group = c.urate#i0.exp_group
+120. estadd local samp "Employed"
+121. estadd local dest "Emp."
+122. estadd scalar w = r(F)
+123. 
+. eststo: quiet reg d_en i1.exp_group c.urate#i1.exp_group c.urate#i0.exp_group i.geo_fe i.demographi
+> c i.date if sample, vce(cluster clust_var)
+124. quiet test c.urate#i1.exp_group = c.urate#i0.exp_group
+125. estadd local samp "Employed"
+126. estadd local dest "NILF"
+127. estadd scalar w = r(F)
+128. 
+. eststo: quiet reg d_nu i1.exp_group c.urate#i1.exp_group c.urate#i0.exp_group i.geo_fe i.demographi
+> c i.date if sample, vce(cluster clust_var)
+129. quiet test c.urate#i1.exp_group = c.urate#i0.exp_group
+130. estadd local samp "NILF"
+131. estadd local dest "Unemp."
+132. estadd scalar w = r(F)
+133. 
+. eststo: quiet reg d_un i1.exp_group c.urate#i1.exp_group c.urate#i0.exp_group i.geo_fe i.demographi
+> c i.date if sample, vce(cluster clust_var)
+134. quiet test c.urate#i1.exp_group = c.urate#i0.exp_group
+135. estadd local samp "Unemp."
+136. estadd local dest "NILF"
+137. estadd scalar w = r(F)
+138. 
+. * Stata table
+. esttab, keep(*.exp_group*) se stats(samp dest w r2 N, label("Sample" "Destination" "Wald test")) //
+> /
+>                 nomtitles label varwidth(35) order(1.exp_group 1.exp_group#c.urate 0.exp_group#c.ur
+> ate) interaction(" X ")
+139. 
+. * latex table
+. esttab using "$table_path\table3.tex", replace keep(*.exp_group*) se stats(samp dest w r2 N, label(
+> "Sample" "Destination" "Wald test" "$ R^2 $"))   ///
+>            nomtitles label varwidth(35) order(1.exp_group 1.exp_group#c.urate 0.exp_group#c.urate) 
+> interaction(" $\times$ ") ///
+>            title("Exits and Other Flows \label{table3:$tab_lbl}") booktabs
+140.         
+. drop d_exit d_eu d_ee d_en d_nu d_un
+141.         
+. **
+. 
+.                          
+. * Table 4
+. 
+. * dep variables
+. * ivoluntary separation to unemployment
+. gen d_eu_involuntary = 0 if (L.empstat>=10 & L.empstat<=12)
+142. replace d_eu_involuntary = 100 if (L.empstat>=10 & L.empstat<=12) & (whyunemp >= 1 & whyunemp <=
+>  3)
+143. 
+. * voluntary sep. to unemployment
+. gen d_eu_voluntary = 0 if (L.empstat>=10 & L.empstat<=12)
+144. replace d_eu_voluntary = 100 if (L.empstat>=10 & L.empstat<=12) & (whyunemp == 4)
+145. 
+. * regressions
+. eststo clear
+146. local variables = "i1.exp_group c.urate#i1.exp_group c.urate#i0.exp_group i.geo_fe i.demographic
+>  i.date"
+147. 
+. eststo: quietly reg d_eu_involuntary `variables' [w=weight] if sample, vce(cluster clust_var)
+148. quiet test c.urate#i1.exp_group = c.urate#i0.exp_group
+149. estadd scalar w = r(F)
+150. 
+. eststo: quietly reg d_eu_voluntary `variables' [w=weight] if sample, vce(cluster clust_var)
+151. quiet test c.urate#i1.exp_group = c.urate#i0.exp_group
+152. estadd scalar w = r(F)
+153. 
+. * Stata table
+. esttab, keep(*.exp_group*) se stats(w r2 N, label("Wald test")) nomtitles label varwidth(35) ///
+>                 order(1.exp_group 1.exp_group#c.urate 0.exp_group#c.urate) interaction(" X ")
+154.                 
+. * latex table
+. esttab using "$table_path\table4.tex", replace keep(*.exp_group*) se stats(w r2 N, label("Wald test
+> " "$ R^2 $")) label  ///
+>                 order(1.exp_group 1.exp_group#c.urate 0.exp_group#c.urate) ///
+>                 mtitles("$\Pr(\text{Involuntary}) \times 100$" "$\Pr(\text{Voluntary}) \times 100$"
+>  "(3)") interaction(" $\times$ ") ///
+>                 title("Involuntary and Voluntary Separations to Unemployment \label{table4:$tab_lbl
+> }") booktabs
+155. 
+. drop d_eu_involuntary d_eu_voluntary
+156.                 
+. ** 
+. 
+. }
+ 
+****************
+ 
+Step 1
+ 
+****************
+ 
+ 
+latex path for tables:
+C:\Users\jcrechet\Dropbox\Applications\Overleaf\Forsythe (2021) - Replication\Tables
+ 
+(est1 stored)
+(est2 stored)
+(est3 stored)
+(est4 stored)
+
+---------------------------------------------------------------------------------------------------
+                                             (1)             (2)             (3)             (4)   
+---------------------------------------------------------------------------------------------------
+U.\ rate                                  -0.119***       -0.146***       -0.140***      -0.0186   
+                                        (0.0130)       (0.00888)       (0.00914)        (0.0117)   
+
+fixed effect                                  No             Yes             Yes             Yes   
+
+Demographic fixed effect                      No              No             Yes             Yes   
+
+Month-year fixed effect                       No              No              No             Yes   
+---------------------------------------------------------------------------------------------------
+Observations                            16208583        16208583        16208583        16208583   
+R-squared                                  0.000           0.000           0.002           0.003   
+---------------------------------------------------------------------------------------------------
+Standard errors in parentheses
+* p<0.05, ** p<0.01, *** p<0.001
+(output written to C:\Users\jcrechet\Dropbox\Applications\Overleaf\Forsythe (2021) - Replication\Tabl
+> es\table1a.tex)
+(est1 stored)
+(est2 stored)
+(est3 stored)
+(est4 stored)
+
+---------------------------------------------------------------------------------------------------
+                                             (1)             (2)             (3)             (4)   
+---------------------------------------------------------------------------------------------------
+PE $\leq$ 10                               5.454***        5.456***        5.350***        5.356***
+                                         (0.118)         (0.121)         (0.118)         (0.118)   
+
+PE $\leq$ 10 # U.\ rate                   -0.343***       -0.370***       -0.366***       -0.244***
+                                        (0.0171)        (0.0158)        (0.0157)        (0.0163)   
+
+PE $>$ 10 # U.\ rate                     -0.0407**       -0.0664***      -0.0611***       0.0616***
+                                        (0.0122)       (0.00898)       (0.00956)        (0.0126)   
+
+fixed effect                                  No             Yes             Yes             Yes   
+
+Demographic fixed effect                      No              No             Yes             Yes   
+
+Month-year fixed effect                       No              No              No             Yes   
+---------------------------------------------------------------------------------------------------
+Observations                            16208583        16208583        16208583        16208583   
+R-squared                                  0.008           0.008           0.009           0.010   
+---------------------------------------------------------------------------------------------------
+Standard errors in parentheses
+* p<0.05, ** p<0.01, *** p<0.001
+(output written to C:\Users\jcrechet\Dropbox\Applications\Overleaf\Forsythe (2021) - Replication\Tabl
+> es\table1b.tex)
+(23,065,127 missing values generated)
+(267,870 real changes made)
+(2,676,693 real changes made)
+(2,784,875 real changes made)
+(2,898,501 real changes made)
+(2,875,974 real changes made)
+(2,708,856 real changes made)
+(2,407,947 real changes made)
+(2,048,684 real changes made)
+(4,395,727 real changes made)
+
+          exp_cat |      Freq.     Percent        Cum.
+------------------+-----------------------------------
+           PE < 0 |    267,870        0.90        0.90
+           PE = 0 |  1,094,267        3.67        4.57
+           PE = 1 |  1,143,119        3.83        8.40
+           PE = 2 |    739,218        2.48       10.87
+           PE = 3 |    607,056        2.03       12.91
+           PE = 4 |    552,730        1.85       14.76
+           PE = 5 |    531,653        1.78       16.54
+           PE = 6 |    527,448        1.77       18.31
+           PE = 7 |    525,333        1.76       20.07
+           PE = 8 |    525,124        1.76       21.83
+           PE = 9 |    523,282        1.75       23.59
+10 $\leq$ PE < 15 |  2,676,693        8.97       32.56
+15 $\leq$ PE < 19 |  2,784,875        9.33       41.89
+20 $\leq$ PE < 24 |  2,898,501        9.72       51.61
+25 $\leq$ PE < 29 |  2,875,974        9.64       61.25
+30 $\leq$ PE < 34 |  2,708,856        9.08       70.33
+35 $\leq$ PE < 39 |  2,407,947        8.07       78.40
+40 $\leq$ PE < 44 |  2,048,684        6.87       85.27
+     PE $\geq$ 45 |  4,395,727       14.73      100.00
+------------------+-----------------------------------
+            Total | 29,834,357      100.00
+
+-----------------------------------------------------------------------------------------------------
+-> exp_cat = PE < 0
+
+exp_neg_val |      Freq.     Percent        Cum.
+------------+-----------------------------------
+        -12 |         34        0.01        0.01
+        -11 |         16        0.01        0.02
+        -10 |         76        0.03        0.05
+         -9 |         64        0.02        0.07
+         -8 |        248        0.09        0.16
+         -7 |        270        0.10        0.26
+         -6 |      1,069        0.40        0.66
+         -5 |      1,143        0.43        1.09
+         -4 |      2,295        0.86        1.95
+         -3 |      7,226        2.70        4.64
+         -2 |     25,518        9.53       14.17
+         -1 |    229,911       85.83      100.00
+------------+-----------------------------------
+      Total |    267,870      100.00
+
+-----------------------------------------------------------------------------------------------------
+-> exp_cat = PE = 0
+
+exp_neg_val |      Freq.     Percent        Cum.
+------------+-----------------------------------
+          0 |  1,094,267      100.00      100.00
+------------+-----------------------------------
+      Total |  1,094,267      100.00
+
+-----------------------------------------------------------------------------------------------------
+-> exp_cat = PE = 1
+
+exp_neg_val |      Freq.     Percent        Cum.
+------------+-----------------------------------
+          1 |  1,143,119      100.00      100.00
+------------+-----------------------------------
+      Total |  1,143,119      100.00
+
+-----------------------------------------------------------------------------------------------------
+-> exp_cat = PE = 2
+
+exp_neg_val |      Freq.     Percent        Cum.
+------------+-----------------------------------
+          2 |    739,218      100.00      100.00
+------------+-----------------------------------
+      Total |    739,218      100.00
+
+-----------------------------------------------------------------------------------------------------
+-> exp_cat = PE = 3
+
+exp_neg_val |      Freq.     Percent        Cum.
+------------+-----------------------------------
+          3 |    607,056      100.00      100.00
+------------+-----------------------------------
+      Total |    607,056      100.00
+
+-----------------------------------------------------------------------------------------------------
+-> exp_cat = PE = 4
+
+exp_neg_val |      Freq.     Percent        Cum.
+------------+-----------------------------------
+          4 |    552,730      100.00      100.00
+------------+-----------------------------------
+      Total |    552,730      100.00
+
+-----------------------------------------------------------------------------------------------------
+-> exp_cat = PE = 5
+
+exp_neg_val |      Freq.     Percent        Cum.
+------------+-----------------------------------
+          5 |    531,653      100.00      100.00
+------------+-----------------------------------
+      Total |    531,653      100.00
+
+-----------------------------------------------------------------------------------------------------
+-> exp_cat = PE = 6
+
+exp_neg_val |      Freq.     Percent        Cum.
+------------+-----------------------------------
+          6 |    527,448      100.00      100.00
+------------+-----------------------------------
+      Total |    527,448      100.00
+
+-----------------------------------------------------------------------------------------------------
+-> exp_cat = PE = 7
+
+exp_neg_val |      Freq.     Percent        Cum.
+------------+-----------------------------------
+          7 |    525,333      100.00      100.00
+------------+-----------------------------------
+      Total |    525,333      100.00
+
+-----------------------------------------------------------------------------------------------------
+-> exp_cat = PE = 8
+
+exp_neg_val |      Freq.     Percent        Cum.
+------------+-----------------------------------
+          8 |    525,124      100.00      100.00
+------------+-----------------------------------
+      Total |    525,124      100.00
+
+-----------------------------------------------------------------------------------------------------
+-> exp_cat = PE = 9
+
+exp_neg_val |      Freq.     Percent        Cum.
+------------+-----------------------------------
+          9 |    523,282      100.00      100.00
+------------+-----------------------------------
+      Total |    523,282      100.00
+
+-----------------------------------------------------------------------------------------------------
+-> exp_cat = 10 $\leq$ PE < 15
+
+exp_neg_val |      Freq.     Percent        Cum.
+------------+-----------------------------------
+         10 |    526,912       19.69       19.69
+         11 |    532,125       19.88       39.57
+         12 |    539,695       20.16       59.73
+         13 |    539,357       20.15       79.88
+         14 |    538,604       20.12      100.00
+------------+-----------------------------------
+      Total |  2,676,693      100.00
+
+-----------------------------------------------------------------------------------------------------
+-> exp_cat = 15 $\leq$ PE < 19
+
+exp_neg_val |      Freq.     Percent        Cum.
+------------+-----------------------------------
+         15 |    544,040       19.54       19.54
+         16 |    552,788       19.85       39.39
+         17 |    558,489       20.05       59.44
+         18 |    564,705       20.28       79.72
+         19 |    564,853       20.28      100.00
+------------+-----------------------------------
+      Total |  2,784,875      100.00
+
+-----------------------------------------------------------------------------------------------------
+-> exp_cat = 20 $\leq$ PE < 24
+
+exp_neg_val |      Freq.     Percent        Cum.
+------------+-----------------------------------
+         20 |    572,273       19.74       19.74
+         21 |    577,679       19.93       39.67
+         22 |    585,234       20.19       59.86
+         23 |    581,251       20.05       79.92
+         24 |    582,064       20.08      100.00
+------------+-----------------------------------
+      Total |  2,898,501      100.00
+
+-----------------------------------------------------------------------------------------------------
+-> exp_cat = 25 $\leq$ PE < 29
+
+exp_neg_val |      Freq.     Percent        Cum.
+------------+-----------------------------------
+         25 |    582,472       20.25       20.25
+         26 |    581,048       20.20       40.46
+         27 |    575,836       20.02       60.48
+         28 |    572,009       19.89       80.37
+         29 |    564,609       19.63      100.00
+------------+-----------------------------------
+      Total |  2,875,974      100.00
+
+-----------------------------------------------------------------------------------------------------
+-> exp_cat = 30 $\leq$ PE < 34
+
+exp_neg_val |      Freq.     Percent        Cum.
+------------+-----------------------------------
+         30 |    559,373       20.65       20.65
+         31 |    551,940       20.38       41.03
+         32 |    548,415       20.25       61.27
+         33 |    531,947       19.64       80.91
+         34 |    517,181       19.09      100.00
+------------+-----------------------------------
+      Total |  2,708,856      100.00
+
+-----------------------------------------------------------------------------------------------------
+-> exp_cat = 35 $\leq$ PE < 39
+
+exp_neg_val |      Freq.     Percent        Cum.
+------------+-----------------------------------
+         35 |    506,413       21.03       21.03
+         36 |    495,053       20.56       41.59
+         37 |    481,391       19.99       61.58
+         38 |    471,147       19.57       81.15
+         39 |    453,943       18.85      100.00
+------------+-----------------------------------
+      Total |  2,407,947      100.00
+
+-----------------------------------------------------------------------------------------------------
+-> exp_cat = 40 $\leq$ PE < 44
+
+exp_neg_val |      Freq.     Percent        Cum.
+------------+-----------------------------------
+         40 |    439,083       21.43       21.43
+         41 |    424,913       20.74       42.17
+         42 |    410,532       20.04       62.21
+         43 |    394,549       19.26       81.47
+         44 |    379,607       18.53      100.00
+------------+-----------------------------------
+      Total |  2,048,684      100.00
+
+-----------------------------------------------------------------------------------------------------
+-> exp_cat = PE $\geq$ 45
+
+exp_neg_val |      Freq.     Percent        Cum.
+------------+-----------------------------------
+         45 |    363,863        8.28        8.28
+         46 |    351,997        8.01       16.29
+         47 |    342,230        7.79       24.07
+         48 |    326,532        7.43       31.50
+         49 |    309,746        7.05       38.55
+         50 |    298,851        6.80       45.34
+         51 |    285,424        6.49       51.84
+         52 |    275,566        6.27       58.11
+         53 |    261,658        5.95       64.06
+         54 |    250,523        5.70       69.76
+         55 |    231,810        5.27       75.03
+         56 |    222,927        5.07       80.10
+         57 |    192,156        4.37       84.47
+         58 |    183,062        4.16       88.64
+         59 |    168,485        3.83       92.47
+         60 |    132,306        3.01       95.48
+         61 |     52,489        1.19       96.68
+         62 |     44,102        1.00       97.68
+         63 |     35,461        0.81       98.49
+         64 |     28,055        0.64       99.12
+         65 |     11,224        0.26       99.38
+         66 |     10,472        0.24       99.62
+         67 |      5,326        0.12       99.74
+         68 |      5,274        0.12       99.86
+         69 |      1,610        0.04       99.90
+         70 |      1,555        0.04       99.93
+         71 |      1,567        0.04       99.97
+         72 |      1,456        0.03      100.00
+------------+-----------------------------------
+      Total |  4,395,727      100.00
+
+  0
+(est1 stored)
+
+added macro:
+               e(samp) : "All"
+(est2 stored)
+
+added macro:
+               e(samp) : "Employed"
+(est3 stored)
+
+added macro:
+               e(samp) : "Unemployed"
+(est4 stored)
+
+added macro:
+               e(samp) : "NILF"
+
+-----------------------------------------------------------------------------------------------------
+> ---
+                                                  (1)             (2)             (3)             (4)
+>    
+-----------------------------------------------------------------------------------------------------
+> ---
+PE < 0 X U.\ rate                              -0.564***       -0.348***       -1.895***       -0.765
+> ***
+                                             (0.0424)        (0.0398)         (0.284)        (0.0715)
+>    
+
+PE = 0 X U.\ rate                              -0.559***       -0.321***       -2.134***       -0.799
+> ***
+                                             (0.0291)        (0.0410)         (0.140)        (0.0485)
+>    
+
+PE = 1 X U.\ rate                              -0.500***       -0.324***       -2.021***       -0.696
+> ***
+                                             (0.0344)        (0.0306)         (0.191)        (0.0563)
+>    
+
+PE = 2 X U.\ rate                              -0.285***       -0.234***       -1.851***       -0.470
+> ***
+                                             (0.0238)        (0.0222)         (0.190)        (0.0574)
+>    
+
+PE = 3 X U.\ rate                              -0.188***       -0.163***       -1.890***       -0.450
+> ***
+                                             (0.0199)        (0.0197)         (0.195)        (0.0631)
+>    
+
+PE = 4 X U.\ rate                              -0.165***       -0.153***       -1.909***       -0.423
+> ***
+                                             (0.0375)        (0.0228)         (0.261)        (0.0860)
+>    
+
+PE = 5 X U.\ rate                              -0.111**        -0.101***       -2.049***       -0.380
+> ***
+                                             (0.0322)        (0.0203)         (0.267)         (0.102)
+>    
+
+PE = 6 X U.\ rate                             -0.0835***       -0.122***       -1.661***       -0.366
+> ***
+                                             (0.0218)        (0.0168)         (0.204)        (0.0860)
+>    
+
+PE = 7 X U.\ rate                             -0.0727***       -0.109***       -1.736***       -0.230
+> ** 
+                                             (0.0197)        (0.0168)         (0.235)        (0.0738)
+>    
+
+PE = 8 X U.\ rate                             -0.0598*        -0.0771***       -2.000***       -0.228
+> ** 
+                                             (0.0271)        (0.0215)         (0.279)        (0.0716)
+>    
+
+PE = 9 X U.\ rate                             -0.0363         -0.0735**        -1.717***       -0.238
+> *  
+                                             (0.0291)        (0.0221)         (0.326)        (0.0961)
+>    
+
+10 $\leq$ PE < 15 X U.\ rate                   0.0159         -0.0167          -1.612***       -0.162
+> *  
+                                             (0.0192)        (0.0136)         (0.219)        (0.0707)
+>    
+
+15 $\leq$ PE < 19 X U.\ rate                   0.0318         0.00474          -1.561***       -0.121
+> *  
+                                             (0.0163)        (0.0113)         (0.199)        (0.0578)
+>    
+
+20 $\leq$ PE < 24 X U.\ rate                   0.0645***       0.0379**        -1.404***       -0.169
+> ** 
+                                             (0.0161)        (0.0110)         (0.218)        (0.0513)
+>    
+
+25 $\leq$ PE < 29 X U.\ rate                   0.0673***       0.0319**        -1.212***      -0.0893
+>    
+                                             (0.0135)        (0.0104)         (0.157)        (0.0462)
+>    
+
+30 $\leq$ PE < 34 X U.\ rate                   0.0711***       0.0329**        -1.200***       0.0273
+>    
+                                             (0.0138)       (0.00979)         (0.138)        (0.0409)
+>    
+
+35 $\leq$ PE < 39 X U.\ rate                   0.0698***       0.0444***       -1.331***       0.0550
+>    
+                                             (0.0138)        (0.0113)         (0.155)        (0.0392)
+>    
+
+40 $\leq$ PE < 44 X U.\ rate                   0.0689**        0.0468***       -1.443***       0.0573
+>    
+                                             (0.0212)        (0.0126)         (0.199)        (0.0549)
+>    
+
+PE $\geq$ 45 X U.\ rate                        0.0880***       0.0503***       -1.089***       0.0994
+> ** 
+                                             (0.0123)        (0.0115)         (0.164)        (0.0336)
+>    
+-----------------------------------------------------------------------------------------------------
+> ---
+Sample                                            All        Employed      Unemployed            NILF
+>    
+r2                                             0.0480          0.0259           0.246          0.0718
+>    
+N                                            16208583        10584758          630938         4992887
+>    
+-----------------------------------------------------------------------------------------------------
+> ---
+Standard errors in parentheses
+* p<0.05, ** p<0.01, *** p<0.001
+(output written to C:\Users\jcrechet\Dropbox\Applications\Overleaf\Forsythe (2021) - Replication\Tabl
+> es\tableb2.tex)
+(est1 stored)
+
+added macro:
+               e(samp) : "All"
+
+added scalar:
+                  e(w) =  552.54896
+(est2 stored)
+
+added macro:
+               e(samp) : "Employed"
+
+added scalar:
+                  e(w) =  198.71007
+(est3 stored)
+
+added macro:
+               e(samp) : "Unemployed"
+
+added scalar:
+                  e(w) =  58.195805
+(est4 stored)
+
+added macro:
+               e(samp) : "NILF"
+
+added scalar:
+                  e(w) =  270.92089
+
+---------------------------------------------------------------------------------------------------
+                                             (1)             (2)             (3)             (4)   
+---------------------------------------------------------------------------------------------------
+PE $\leq$ 10                               5.356***        2.810***        7.083***        9.815***
+                                         (0.118)         (0.109)         (0.646)         (0.369)   
+
+PE $\leq$ 10 X U.\ rate                   -0.244***       -0.167***       -1.887***       -0.578***
+                                        (0.0163)        (0.0162)         (0.157)        (0.0368)   
+
+PE $>$ 10 X U.\ rate                      0.0616***       0.0291**        -1.395***       0.0329   
+                                        (0.0126)       (0.00975)         (0.161)        (0.0371)   
+---------------------------------------------------------------------------------------------------
+Sample                                       All        Employed      Unemployed            NILF   
+Wald test                                  552.5           198.7           58.20           270.9   
+r2                                       0.00985         0.00459          0.0352          0.0224   
+N                                       16208583        10584758          630938         4992887   
+---------------------------------------------------------------------------------------------------
+Standard errors in parentheses
+* p<0.05, ** p<0.01, *** p<0.001
+(output written to C:\Users\jcrechet\Dropbox\Applications\Overleaf\Forsythe (2021) - Replication\Tabl
+> es\table2.tex)
+(16,321,610 missing values generated)
+(295,699 real changes made)
+(551,258 real changes made)
+(16,321,610 missing values generated)
+(165,898 real changes made)
+(16,321,610 missing values generated)
+(295,699 real changes made)
+(16,321,610 missing values generated)
+(385,360 real changes made)
+(23,229,129 missing values generated)
+(173,629 real changes made)
+(29,068,336 missing values generated)
+(177,657 real changes made)
+(est1 stored)
+
+added macro:
+               e(samp) : "Employed"
+
+added macro:
+               e(dest) : "All"
+
+added scalar:
+                  e(w) =  80.104129
+(est2 stored)
+
+added macro:
+               e(samp) : "Employed"
+
+added macro:
+               e(dest) : "Unemp."
+
+added scalar:
+                  e(w) =  3.6308663
+(est3 stored)
+
+added macro:
+               e(samp) : "Employed"
+
+added macro:
+               e(dest) : "Emp."
+
+added scalar:
+                  e(w) =  274.88511
+(est4 stored)
+
+added macro:
+               e(samp) : "Employed"
+
+added macro:
+               e(dest) : "NILF"
+
+added scalar:
+                  e(w) =  1.6697486
+(est5 stored)
+
+added macro:
+               e(samp) : "NILF"
+
+added macro:
+               e(dest) : "Unemp."
+
+added scalar:
+                  e(w) =  .60732491
+(est6 stored)
+
+added macro:
+               e(samp) : "Unemp."
+
+added macro:
+               e(dest) : "NILF"
+
+added scalar:
+                  e(w) =  67.892151
+
+-----------------------------------------------------------------------------------------------------
+> ------------------------------
+                                             (1)             (2)             (3)             (4)     
+>         (5)             (6)   
+-----------------------------------------------------------------------------------------------------
+> ------------------------------
+PE $\leq$ 10                               5.662***        0.788***        2.665***        2.209***  
+>       4.089***        2.631***
+                                         (0.174)        (0.0497)        (0.0888)         (0.131)     
+>     (0.209)         (0.489)   
+
+PE $\leq$ 10 X U.\ rate                  -0.0226           0.149***       -0.177***      0.00545     
+>       0.313***       -0.444***
+                                        (0.0255)       (0.00791)        (0.0146)        (0.0187)     
+>    (0.0351)        (0.0880)   
+
+PE $>$ 10 X U.\ rate                       0.173***        0.134***       0.0133          0.0262     
+>       0.280***       -0.965***
+                                        (0.0258)       (0.00642)        (0.0130)        (0.0170)     
+>    (0.0167)         (0.102)   
+-----------------------------------------------------------------------------------------------------
+> ------------------------------
+Sample                                  Employed        Employed        Employed        Employed     
+>        NILF          Unemp.   
+Destination                                  All          Unemp.            Emp.            NILF     
+>      Unemp.            NILF   
+Wald test                                  80.10           3.631           274.9           1.670     
+>       0.607           67.89   
+r2                                        0.0168         0.00541         0.00402          0.0127     
+>      0.0171          0.0339   
+N                                       10584758        10584758        10584758        10584758     
+>     4992887          630938   
+-----------------------------------------------------------------------------------------------------
+> ------------------------------
+Standard errors in parentheses
+* p<0.05, ** p<0.01, *** p<0.001
+(output written to C:\Users\jcrechet\Dropbox\Applications\Overleaf\Forsythe (2021) - Replication\Tabl
+> es\table3.tex)
+(16,321,610 missing values generated)
+(119,449 real changes made)
+(16,321,610 missing values generated)
+(19,761 real changes made)
+(est1 stored)
+
+added scalar:
+                  e(w) =  3.8256707
+(est2 stored)
+
+added scalar:
+                  e(w) =  84.426996
+
+-------------------------------------------------------------------
+                                             (1)             (2)   
+-------------------------------------------------------------------
+PE $\leq$ 10                               0.185***        0.327***
+                                        (0.0419)        (0.0149)   
+
+PE $\leq$ 10 X U.\ rate                    0.133***      -0.0117***
+                                       (0.00742)       (0.00270)   
+
+PE $>$ 10 X U.\ rate                       0.119***      0.00717***
+                                       (0.00674)       (0.00182)   
+-------------------------------------------------------------------
+Wald test                                  3.826           84.43   
+r2                                       0.00380         0.00110   
+N                                       10584758        10584758   
+-------------------------------------------------------------------
+Standard errors in parentheses
+* p<0.05, ** p<0.01, *** p<0.001
+(output written to C:\Users\jcrechet\Dropbox\Applications\Overleaf\Forsythe (2021) - Replication\Tabl
+> es\table4.tex)
+ 
+****************
+ 
+Step 2
+ 
+****************
+ 
+(4,389,077 real changes made)
+ 
+latex path for tables:
+C:\Users\jcrechet\Dropbox\Applications\Overleaf\Forsythe (2021) - Replication\Tables\2019
+ 
+(est1 stored)
+(est2 stored)
+(est3 stored)
+(est4 stored)
+
+---------------------------------------------------------------------------------------------------
+                                             (1)             (2)             (3)             (4)   
+---------------------------------------------------------------------------------------------------
+U.\ rate                                 -0.0716***      -0.0874***      -0.0866***      -0.0199*  
+                                        (0.0106)       (0.00869)       (0.00874)       (0.00965)   
+
+fixed effect                                  No             Yes             Yes             Yes   
+
+Demographic fixed effect                      No              No             Yes             Yes   
+
+Month-year fixed effect                       No              No              No             Yes   
+---------------------------------------------------------------------------------------------------
+Observations                            20597660        20597660        20597660        20597660   
+R-squared                                  0.000           0.000           0.002           0.003   
+---------------------------------------------------------------------------------------------------
+Standard errors in parentheses
+* p<0.05, ** p<0.01, *** p<0.001
+(output written to C:\Users\jcrechet\Dropbox\Applications\Overleaf\Forsythe (2021) - Replication\Tabl
+> es\2019\table1a.tex)
+(est1 stored)
+(est2 stored)
+(est3 stored)
+(est4 stored)
+
+---------------------------------------------------------------------------------------------------
+                                             (1)             (2)             (3)             (4)   
+---------------------------------------------------------------------------------------------------
+PE $\leq$ 10                               4.736***        4.734***        4.624***        4.629***
+                                         (0.124)         (0.127)         (0.123)         (0.123)   
+
+PE $\leq$ 10 # U.\ rate                   -0.235***       -0.250***       -0.250***       -0.183***
+                                        (0.0146)        (0.0155)        (0.0151)        (0.0119)   
+
+PE $>$ 10 # U.\ rate                     -0.0159         -0.0308**       -0.0302**        0.0377** 
+                                        (0.0106)       (0.00924)       (0.00968)        (0.0119)   
+
+fixed effect                                  No             Yes             Yes             Yes   
+
+Demographic fixed effect                      No              No             Yes             Yes   
+
+Month-year fixed effect                       No              No              No             Yes   
+---------------------------------------------------------------------------------------------------
+Observations                            20597660        20597660        20597660        20597660   
+R-squared                                  0.007           0.007           0.009           0.009   
+---------------------------------------------------------------------------------------------------
+Standard errors in parentheses
+* p<0.05, ** p<0.01, *** p<0.001
+(output written to C:\Users\jcrechet\Dropbox\Applications\Overleaf\Forsythe (2021) - Replication\Tabl
+> es\2019\table1b.tex)
+(23,065,127 missing values generated)
+(267,870 real changes made)
+(2,676,693 real changes made)
+(2,784,875 real changes made)
+(2,898,501 real changes made)
+(2,875,974 real changes made)
+(2,708,856 real changes made)
+(2,407,947 real changes made)
+(2,048,684 real changes made)
+(4,395,727 real changes made)
+
+          exp_cat |      Freq.     Percent        Cum.
+------------------+-----------------------------------
+           PE < 0 |    267,870        0.90        0.90
+           PE = 0 |  1,094,267        3.67        4.57
+           PE = 1 |  1,143,119        3.83        8.40
+           PE = 2 |    739,218        2.48       10.87
+           PE = 3 |    607,056        2.03       12.91
+           PE = 4 |    552,730        1.85       14.76
+           PE = 5 |    531,653        1.78       16.54
+           PE = 6 |    527,448        1.77       18.31
+           PE = 7 |    525,333        1.76       20.07
+           PE = 8 |    525,124        1.76       21.83
+           PE = 9 |    523,282        1.75       23.59
+10 $\leq$ PE < 15 |  2,676,693        8.97       32.56
+15 $\leq$ PE < 19 |  2,784,875        9.33       41.89
+20 $\leq$ PE < 24 |  2,898,501        9.72       51.61
+25 $\leq$ PE < 29 |  2,875,974        9.64       61.25
+30 $\leq$ PE < 34 |  2,708,856        9.08       70.33
+35 $\leq$ PE < 39 |  2,407,947        8.07       78.40
+40 $\leq$ PE < 44 |  2,048,684        6.87       85.27
+     PE $\geq$ 45 |  4,395,727       14.73      100.00
+------------------+-----------------------------------
+            Total | 29,834,357      100.00
+
+-----------------------------------------------------------------------------------------------------
+-> exp_cat = PE < 0
+
+exp_neg_val |      Freq.     Percent        Cum.
+------------+-----------------------------------
+        -12 |         34        0.01        0.01
+        -11 |         16        0.01        0.02
+        -10 |         76        0.03        0.05
+         -9 |         64        0.02        0.07
+         -8 |        248        0.09        0.16
+         -7 |        270        0.10        0.26
+         -6 |      1,069        0.40        0.66
+         -5 |      1,143        0.43        1.09
+         -4 |      2,295        0.86        1.95
+         -3 |      7,226        2.70        4.64
+         -2 |     25,518        9.53       14.17
+         -1 |    229,911       85.83      100.00
+------------+-----------------------------------
+      Total |    267,870      100.00
+
+-----------------------------------------------------------------------------------------------------
+-> exp_cat = PE = 0
+
+exp_neg_val |      Freq.     Percent        Cum.
+------------+-----------------------------------
+          0 |  1,094,267      100.00      100.00
+------------+-----------------------------------
+      Total |  1,094,267      100.00
+
+-----------------------------------------------------------------------------------------------------
+-> exp_cat = PE = 1
+
+exp_neg_val |      Freq.     Percent        Cum.
+------------+-----------------------------------
+          1 |  1,143,119      100.00      100.00
+------------+-----------------------------------
+      Total |  1,143,119      100.00
+
+-----------------------------------------------------------------------------------------------------
+-> exp_cat = PE = 2
+
+exp_neg_val |      Freq.     Percent        Cum.
+------------+-----------------------------------
+          2 |    739,218      100.00      100.00
+------------+-----------------------------------
+      Total |    739,218      100.00
+
+-----------------------------------------------------------------------------------------------------
+-> exp_cat = PE = 3
+
+exp_neg_val |      Freq.     Percent        Cum.
+------------+-----------------------------------
+          3 |    607,056      100.00      100.00
+------------+-----------------------------------
+      Total |    607,056      100.00
+
+-----------------------------------------------------------------------------------------------------
+-> exp_cat = PE = 4
+
+exp_neg_val |      Freq.     Percent        Cum.
+------------+-----------------------------------
+          4 |    552,730      100.00      100.00
+------------+-----------------------------------
+      Total |    552,730      100.00
+
+-----------------------------------------------------------------------------------------------------
+-> exp_cat = PE = 5
+
+exp_neg_val |      Freq.     Percent        Cum.
+------------+-----------------------------------
+          5 |    531,653      100.00      100.00
+------------+-----------------------------------
+      Total |    531,653      100.00
+
+-----------------------------------------------------------------------------------------------------
+-> exp_cat = PE = 6
+
+exp_neg_val |      Freq.     Percent        Cum.
+------------+-----------------------------------
+          6 |    527,448      100.00      100.00
+------------+-----------------------------------
+      Total |    527,448      100.00
+
+-----------------------------------------------------------------------------------------------------
+-> exp_cat = PE = 7
+
+exp_neg_val |      Freq.     Percent        Cum.
+------------+-----------------------------------
+          7 |    525,333      100.00      100.00
+------------+-----------------------------------
+      Total |    525,333      100.00
+
+-----------------------------------------------------------------------------------------------------
+-> exp_cat = PE = 8
+
+exp_neg_val |      Freq.     Percent        Cum.
+------------+-----------------------------------
+          8 |    525,124      100.00      100.00
+------------+-----------------------------------
+      Total |    525,124      100.00
+
+-----------------------------------------------------------------------------------------------------
+-> exp_cat = PE = 9
+
+exp_neg_val |      Freq.     Percent        Cum.
+------------+-----------------------------------
+          9 |    523,282      100.00      100.00
+------------+-----------------------------------
+      Total |    523,282      100.00
+
+-----------------------------------------------------------------------------------------------------
+-> exp_cat = 10 $\leq$ PE < 15
+
+exp_neg_val |      Freq.     Percent        Cum.
+------------+-----------------------------------
+         10 |    526,912       19.69       19.69
+         11 |    532,125       19.88       39.57
+         12 |    539,695       20.16       59.73
+         13 |    539,357       20.15       79.88
+         14 |    538,604       20.12      100.00
+------------+-----------------------------------
+      Total |  2,676,693      100.00
+
+-----------------------------------------------------------------------------------------------------
+-> exp_cat = 15 $\leq$ PE < 19
+
+exp_neg_val |      Freq.     Percent        Cum.
+------------+-----------------------------------
+         15 |    544,040       19.54       19.54
+         16 |    552,788       19.85       39.39
+         17 |    558,489       20.05       59.44
+         18 |    564,705       20.28       79.72
+         19 |    564,853       20.28      100.00
+------------+-----------------------------------
+      Total |  2,784,875      100.00
+
+-----------------------------------------------------------------------------------------------------
+-> exp_cat = 20 $\leq$ PE < 24
+
+exp_neg_val |      Freq.     Percent        Cum.
+------------+-----------------------------------
+         20 |    572,273       19.74       19.74
+         21 |    577,679       19.93       39.67
+         22 |    585,234       20.19       59.86
+         23 |    581,251       20.05       79.92
+         24 |    582,064       20.08      100.00
+------------+-----------------------------------
+      Total |  2,898,501      100.00
+
+-----------------------------------------------------------------------------------------------------
+-> exp_cat = 25 $\leq$ PE < 29
+
+exp_neg_val |      Freq.     Percent        Cum.
+------------+-----------------------------------
+         25 |    582,472       20.25       20.25
+         26 |    581,048       20.20       40.46
+         27 |    575,836       20.02       60.48
+         28 |    572,009       19.89       80.37
+         29 |    564,609       19.63      100.00
+------------+-----------------------------------
+      Total |  2,875,974      100.00
+
+-----------------------------------------------------------------------------------------------------
+-> exp_cat = 30 $\leq$ PE < 34
+
+exp_neg_val |      Freq.     Percent        Cum.
+------------+-----------------------------------
+         30 |    559,373       20.65       20.65
+         31 |    551,940       20.38       41.03
+         32 |    548,415       20.25       61.27
+         33 |    531,947       19.64       80.91
+         34 |    517,181       19.09      100.00
+------------+-----------------------------------
+      Total |  2,708,856      100.00
+
+-----------------------------------------------------------------------------------------------------
+-> exp_cat = 35 $\leq$ PE < 39
+
+exp_neg_val |      Freq.     Percent        Cum.
+------------+-----------------------------------
+         35 |    506,413       21.03       21.03
+         36 |    495,053       20.56       41.59
+         37 |    481,391       19.99       61.58
+         38 |    471,147       19.57       81.15
+         39 |    453,943       18.85      100.00
+------------+-----------------------------------
+      Total |  2,407,947      100.00
+
+-----------------------------------------------------------------------------------------------------
+-> exp_cat = 40 $\leq$ PE < 44
+
+exp_neg_val |      Freq.     Percent        Cum.
+------------+-----------------------------------
+         40 |    439,083       21.43       21.43
+         41 |    424,913       20.74       42.17
+         42 |    410,532       20.04       62.21
+         43 |    394,549       19.26       81.47
+         44 |    379,607       18.53      100.00
+------------+-----------------------------------
+      Total |  2,048,684      100.00
+
+-----------------------------------------------------------------------------------------------------
+-> exp_cat = PE $\geq$ 45
+
+exp_neg_val |      Freq.     Percent        Cum.
+------------+-----------------------------------
+         45 |    363,863        8.28        8.28
+         46 |    351,997        8.01       16.29
+         47 |    342,230        7.79       24.07
+         48 |    326,532        7.43       31.50
+         49 |    309,746        7.05       38.55
+         50 |    298,851        6.80       45.34
+         51 |    285,424        6.49       51.84
+         52 |    275,566        6.27       58.11
+         53 |    261,658        5.95       64.06
+         54 |    250,523        5.70       69.76
+         55 |    231,810        5.27       75.03
+         56 |    222,927        5.07       80.10
+         57 |    192,156        4.37       84.47
+         58 |    183,062        4.16       88.64
+         59 |    168,485        3.83       92.47
+         60 |    132,306        3.01       95.48
+         61 |     52,489        1.19       96.68
+         62 |     44,102        1.00       97.68
+         63 |     35,461        0.81       98.49
+         64 |     28,055        0.64       99.12
+         65 |     11,224        0.26       99.38
+         66 |     10,472        0.24       99.62
+         67 |      5,326        0.12       99.74
+         68 |      5,274        0.12       99.86
+         69 |      1,610        0.04       99.90
+         70 |      1,555        0.04       99.93
+         71 |      1,567        0.04       99.97
+         72 |      1,456        0.03      100.00
+------------+-----------------------------------
+      Total |  4,395,727      100.00
+
+  0
+(est1 stored)
+
+added macro:
+               e(samp) : "All"
+(est2 stored)
+
+added macro:
+               e(samp) : "Employed"
+(est3 stored)
+
+added macro:
+               e(samp) : "Unemployed"
+(est4 stored)
+
+added macro:
+               e(samp) : "NILF"
+
+-----------------------------------------------------------------------------------------------------
+> ---
+                                                  (1)             (2)             (3)             (4)
+>    
+-----------------------------------------------------------------------------------------------------
+> ---
+PE < 0 X U.\ rate                              -0.383***       -0.185***       -1.759***       -0.596
+> ***
+                                             (0.0481)        (0.0392)         (0.238)        (0.0644)
+>    
+
+PE = 0 X U.\ rate                              -0.423***       -0.241***       -1.988***       -0.608
+> ***
+                                             (0.0323)        (0.0353)         (0.125)        (0.0463)
+>    
+
+PE = 1 X U.\ rate                              -0.379***       -0.237***       -1.882***       -0.565
+> ***
+                                             (0.0288)        (0.0256)         (0.188)        (0.0488)
+>    
+
+PE = 2 X U.\ rate                              -0.215***       -0.170***       -1.798***       -0.418
+> ***
+                                             (0.0233)        (0.0210)         (0.163)        (0.0499)
+>    
+
+PE = 3 X U.\ rate                              -0.119***       -0.104***       -1.806***       -0.418
+> ***
+                                             (0.0192)        (0.0193)         (0.211)        (0.0703)
+>    
+
+PE = 4 X U.\ rate                              -0.117***       -0.104***       -1.804***       -0.451
+> ***
+                                             (0.0273)        (0.0172)         (0.297)        (0.0543)
+>    
+
+PE = 5 X U.\ rate                             -0.0845**       -0.0731***       -1.967***       -0.446
+> ***
+                                             (0.0283)        (0.0206)         (0.300)         (0.101)
+>    
+
+PE = 6 X U.\ rate                             -0.0494**       -0.0921***       -1.495***       -0.371
+> ***
+                                             (0.0170)        (0.0139)         (0.219)        (0.0772)
+>    
+
+PE = 7 X U.\ rate                             -0.0538**       -0.0922***       -1.616***       -0.270
+> ***
+                                             (0.0175)        (0.0184)         (0.250)        (0.0618)
+>    
+
+PE = 8 X U.\ rate                             -0.0576*        -0.0726***       -1.864***       -0.305
+> ***
+                                             (0.0224)        (0.0183)         (0.304)        (0.0573)
+>    
+
+PE = 9 X U.\ rate                             -0.0298         -0.0587**        -1.664***       -0.301
+> ***
+                                             (0.0257)        (0.0198)         (0.321)        (0.0693)
+>    
+
+10 $\leq$ PE < 15 X U.\ rate                   0.0132         -0.0169          -1.516***       -0.213
+> ***
+                                             (0.0158)        (0.0132)         (0.235)        (0.0566)
+>    
+
+15 $\leq$ PE < 19 X U.\ rate                   0.0209        -0.00220          -1.530***       -0.167
+> ***
+                                             (0.0142)        (0.0105)         (0.221)        (0.0437)
+>    
+
+20 $\leq$ PE < 24 X U.\ rate                   0.0521***       0.0236*         -1.348***       -0.174
+> ***
+                                             (0.0141)       (0.00964)         (0.243)        (0.0403)
+>    
+
+25 $\leq$ PE < 29 X U.\ rate                   0.0455***       0.0140          -1.192***       -0.132
+> ** 
+                                             (0.0127)       (0.00899)         (0.162)        (0.0413)
+>    
+
+30 $\leq$ PE < 34 X U.\ rate                   0.0439**        0.0134          -1.192***      -0.0408
+>    
+                                             (0.0136)       (0.00850)         (0.179)        (0.0356)
+>    
+
+35 $\leq$ PE < 39 X U.\ rate                   0.0417***       0.0267*         -1.305***      -0.0220
+>    
+                                             (0.0117)        (0.0101)         (0.145)        (0.0329)
+>    
+
+40 $\leq$ PE < 44 X U.\ rate                   0.0321          0.0227*         -1.356***     -0.00192
+>    
+                                             (0.0180)       (0.00942)         (0.194)        (0.0423)
+>    
+
+PE $\geq$ 45 X U.\ rate                        0.0318*         0.0226**        -1.154***       0.0491
+>    
+                                             (0.0123)       (0.00806)         (0.172)        (0.0262)
+>    
+-----------------------------------------------------------------------------------------------------
+> ---
+Sample                                            All        Employed      Unemployed            NILF
+>    
+r2                                             0.0461          0.0244           0.246          0.0701
+>    
+N                                            20597660        13331602          756363         6509695
+>    
+-----------------------------------------------------------------------------------------------------
+> ---
+Standard errors in parentheses
+* p<0.05, ** p<0.01, *** p<0.001
+(output written to C:\Users\jcrechet\Dropbox\Applications\Overleaf\Forsythe (2021) - Replication\Tabl
+> es\2019\tableb2.tex)
+(est1 stored)
+
+added macro:
+               e(samp) : "All"
+
+added scalar:
+                  e(w) =  220.96928
+(est2 stored)
+
+added macro:
+               e(samp) : "Employed"
+
+added scalar:
+                  e(w) =  147.09082
+(est3 stored)
+
+added macro:
+               e(samp) : "Unemployed"
+
+added scalar:
+                  e(w) =  57.593553
+(est4 stored)
+
+added macro:
+               e(samp) : "NILF"
+
+added scalar:
+                  e(w) =  141.01787
+
+---------------------------------------------------------------------------------------------------
+                                             (1)             (2)             (3)             (4)   
+---------------------------------------------------------------------------------------------------
+PE $\leq$ 10                               4.629***        2.303***        6.615***        8.767***
+                                         (0.123)        (0.0970)         (0.563)         (0.393)   
+
+PE $\leq$ 10 X U.\ rate                   -0.183***       -0.123***       -1.790***       -0.506***
+                                        (0.0119)        (0.0143)         (0.176)        (0.0298)   
+
+PE $>$ 10 X U.\ rate                      0.0377**        0.0141          -1.346***      -0.0120   
+                                        (0.0119)       (0.00854)         (0.181)        (0.0299)   
+---------------------------------------------------------------------------------------------------
+Sample                                       All        Employed      Unemployed            NILF   
+Wald test                                  221.0           147.1           57.59           141.0   
+r2                                       0.00924         0.00420          0.0323          0.0211   
+N                                       20597660        13331602          756363         6509695   
+---------------------------------------------------------------------------------------------------
+Standard errors in parentheses
+* p<0.05, ** p<0.01, *** p<0.001
+(output written to C:\Users\jcrechet\Dropbox\Applications\Overleaf\Forsythe (2021) - Replication\Tabl
+> es\2019\table2.tex)
+(16,321,610 missing values generated)
+(295,699 real changes made)
+(551,258 real changes made)
+(16,321,610 missing values generated)
+(165,898 real changes made)
+(16,321,610 missing values generated)
+(295,699 real changes made)
+(16,321,610 missing values generated)
+(385,360 real changes made)
+(23,229,129 missing values generated)
+(173,629 real changes made)
+(29,068,336 missing values generated)
+(177,657 real changes made)
+(est1 stored)
+
+added macro:
+               e(samp) : "Employed"
+
+added macro:
+               e(dest) : "All"
+
+added scalar:
+                  e(w) =  30.652979
+(est2 stored)
+
+added macro:
+               e(samp) : "Employed"
+
+added macro:
+               e(dest) : "Unemp."
+
+added scalar:
+                  e(w) =  18.416401
+(est3 stored)
+
+added macro:
+               e(samp) : "Employed"
+
+added macro:
+               e(dest) : "Emp."
+
+added scalar:
+                  e(w) =  211.53977
+(est4 stored)
+
+added macro:
+               e(samp) : "Employed"
+
+added macro:
+               e(dest) : "NILF"
+
+added scalar:
+                  e(w) =  .37351118
+(est5 stored)
+
+added macro:
+               e(samp) : "NILF"
+
+added macro:
+               e(dest) : "Unemp."
+
+added scalar:
+                  e(w) =  10.385934
+(est6 stored)
+
+added macro:
+               e(samp) : "Unemp."
+
+added macro:
+               e(dest) : "NILF"
+
+added scalar:
+                  e(w) =  78.303854
+
+-----------------------------------------------------------------------------------------------------
+> ------------------------------
+                                             (1)             (2)             (3)             (4)     
+>         (5)             (6)   
+-----------------------------------------------------------------------------------------------------
+> ------------------------------
+PE $\leq$ 10                               4.984***        0.621***        2.242***        2.121***  
+>       3.185***        2.599***
+                                         (0.140)        (0.0444)        (0.0794)         (0.113)     
+>     (0.189)         (0.437)   
+
+PE $\leq$ 10 X U.\ rate                   0.0293           0.168***       -0.142***      0.00329     
+>       0.399***       -0.494***
+                                        (0.0218)       (0.00878)        (0.0130)        (0.0187)     
+>    (0.0347)        (0.0903)   
+
+PE $>$ 10 X U.\ rate                       0.145***        0.133***    -0.000123          0.0127     
+>       0.260***       -1.011***
+                                        (0.0232)       (0.00605)        (0.0114)        (0.0165)     
+>    (0.0160)        (0.0935)   
+-----------------------------------------------------------------------------------------------------
+> ------------------------------
+Sample                                  Employed        Employed        Employed        Employed     
+>        NILF          Unemp.   
+Destination                                  All          Unemp.            Emp.            NILF     
+>      Unemp.            NILF   
+Wald test                                  30.65           18.42           211.5           0.374     
+>       10.39           78.30   
+r2                                        0.0161         0.00511         0.00372          0.0124     
+>      0.0161          0.0324   
+N                                       13331602        13331602        13331602        13331602     
+>     6509695          756363   
+-----------------------------------------------------------------------------------------------------
+> ------------------------------
+Standard errors in parentheses
+* p<0.05, ** p<0.01, *** p<0.001
+(output written to C:\Users\jcrechet\Dropbox\Applications\Overleaf\Forsythe (2021) - Replication\Tabl
+> es\2019\table3.tex)
+(16,321,610 missing values generated)
+(119,449 real changes made)
+(16,321,610 missing values generated)
+(19,761 real changes made)
+(est1 stored)
+
+added scalar:
+                  e(w) =  9.6061227
+(est2 stored)
+
+added scalar:
+                  e(w) =  40.481407
+
+-------------------------------------------------------------------
+                                             (1)             (2)   
+-------------------------------------------------------------------
+PE $\leq$ 10                               0.129***        0.276***
+                                        (0.0367)        (0.0118)   
+
+PE $\leq$ 10 X U.\ rate                    0.141***     -0.00672*  
+                                       (0.00744)       (0.00270)   
+
+PE $>$ 10 X U.\ rate                       0.119***      0.00610***
+                                       (0.00655)       (0.00152)   
+-------------------------------------------------------------------
+Wald test                                  9.606           40.48   
+r2                                       0.00354         0.00102   
+N                                       13331602        13331602   
+-------------------------------------------------------------------
+Standard errors in parentheses
+* p<0.05, ** p<0.01, *** p<0.001
+(output written to C:\Users\jcrechet\Dropbox\Applications\Overleaf\Forsythe (2021) - Replication\Tabl
+> es\2019\table4.tex)
+ 
+****************
+ 
+Step 3
+ 
+****************
+ 
+(5,710,188 real changes made)
+(29,834,357 real changes made, 8,432,161 to missing)
+(29,834,357 real changes made, 303,114 to missing)
+(29,834,357 real changes made, 303,114 to missing)
+ 
+latex path for tables:
+C:\Users\jcrechet\Dropbox\Applications\Overleaf\Forsythe (2021) - Replication\Tables\MSA
+ 
+(est1 stored)
+(est2 stored)
+(est3 stored)
+(est4 stored)
+
+---------------------------------------------------------------------------------------------------
+                                             (1)             (2)             (3)             (4)   
+---------------------------------------------------------------------------------------------------
+U.\ rate                                 -0.0346***      -0.0386***      -0.0416***      -0.0236***
+                                       (0.00518)       (0.00324)       (0.00330)       (0.00314)   
+
+fixed effect                                  No             Yes             Yes             Yes   
+
+Demographic fixed effect                      No              No             Yes             Yes   
+
+Month-year fixed effect                       No              No              No             Yes   
+---------------------------------------------------------------------------------------------------
+Observations                            14887472        14887472        14887472        14887472   
+R-squared                                  0.000           0.001           0.003           0.003   
+---------------------------------------------------------------------------------------------------
+Standard errors in parentheses
+* p<0.05, ** p<0.01, *** p<0.001
+(output written to C:\Users\jcrechet\Dropbox\Applications\Overleaf\Forsythe (2021) - Replication\Tabl
+> es\MSA\table1a.tex)
+(est1 stored)
+(est2 stored)
+(est3 stored)
+(est4 stored)
+
+---------------------------------------------------------------------------------------------------
+                                             (1)             (2)             (3)             (4)   
+---------------------------------------------------------------------------------------------------
+PE $\leq$ 10                               4.051***        4.047***        3.930***        3.932***
+                                        (0.0829)        (0.0828)        (0.0809)        (0.0807)   
+
+PE $\leq$ 10 # U.\ rate                   -0.123***       -0.129***       -0.131***       -0.114***
+                                        (0.0101)       (0.00819)       (0.00812)       (0.00711)   
+
+PE $>$ 10 # U.\ rate                    -0.00458        -0.00912**       -0.0114**       0.00648   
+                                       (0.00457)       (0.00342)       (0.00347)       (0.00400)   
+
+fixed effect                                  No             Yes             Yes             Yes   
+
+Demographic fixed effect                      No              No             Yes             Yes   
+
+Month-year fixed effect                       No              No              No             Yes   
+---------------------------------------------------------------------------------------------------
+Observations                            14887472        14887472        14887472        14887472   
+R-squared                                  0.007           0.007           0.009           0.009   
+---------------------------------------------------------------------------------------------------
+Standard errors in parentheses
+* p<0.05, ** p<0.01, *** p<0.001
+(output written to C:\Users\jcrechet\Dropbox\Applications\Overleaf\Forsythe (2021) - Replication\Tabl
+> es\MSA\table1b.tex)
+(23,065,127 missing values generated)
+(267,870 real changes made)
+(2,676,693 real changes made)
+(2,784,875 real changes made)
+(2,898,501 real changes made)
+(2,875,974 real changes made)
+(2,708,856 real changes made)
+(2,407,947 real changes made)
+(2,048,684 real changes made)
+(4,395,727 real changes made)
+
+          exp_cat |      Freq.     Percent        Cum.
+------------------+-----------------------------------
+           PE < 0 |    267,870        0.90        0.90
+           PE = 0 |  1,094,267        3.67        4.57
+           PE = 1 |  1,143,119        3.83        8.40
+           PE = 2 |    739,218        2.48       10.87
+           PE = 3 |    607,056        2.03       12.91
+           PE = 4 |    552,730        1.85       14.76
+           PE = 5 |    531,653        1.78       16.54
+           PE = 6 |    527,448        1.77       18.31
+           PE = 7 |    525,333        1.76       20.07
+           PE = 8 |    525,124        1.76       21.83
+           PE = 9 |    523,282        1.75       23.59
+10 $\leq$ PE < 15 |  2,676,693        8.97       32.56
+15 $\leq$ PE < 19 |  2,784,875        9.33       41.89
+20 $\leq$ PE < 24 |  2,898,501        9.72       51.61
+25 $\leq$ PE < 29 |  2,875,974        9.64       61.25
+30 $\leq$ PE < 34 |  2,708,856        9.08       70.33
+35 $\leq$ PE < 39 |  2,407,947        8.07       78.40
+40 $\leq$ PE < 44 |  2,048,684        6.87       85.27
+     PE $\geq$ 45 |  4,395,727       14.73      100.00
+------------------+-----------------------------------
+            Total | 29,834,357      100.00
+
+-----------------------------------------------------------------------------------------------------
+-> exp_cat = PE < 0
+
+exp_neg_val |      Freq.     Percent        Cum.
+------------+-----------------------------------
+        -12 |         34        0.01        0.01
+        -11 |         16        0.01        0.02
+        -10 |         76        0.03        0.05
+         -9 |         64        0.02        0.07
+         -8 |        248        0.09        0.16
+         -7 |        270        0.10        0.26
+         -6 |      1,069        0.40        0.66
+         -5 |      1,143        0.43        1.09
+         -4 |      2,295        0.86        1.95
+         -3 |      7,226        2.70        4.64
+         -2 |     25,518        9.53       14.17
+         -1 |    229,911       85.83      100.00
+------------+-----------------------------------
+      Total |    267,870      100.00
+
+-----------------------------------------------------------------------------------------------------
+-> exp_cat = PE = 0
+
+exp_neg_val |      Freq.     Percent        Cum.
+------------+-----------------------------------
+          0 |  1,094,267      100.00      100.00
+------------+-----------------------------------
+      Total |  1,094,267      100.00
+
+-----------------------------------------------------------------------------------------------------
+-> exp_cat = PE = 1
+
+exp_neg_val |      Freq.     Percent        Cum.
+------------+-----------------------------------
+          1 |  1,143,119      100.00      100.00
+------------+-----------------------------------
+      Total |  1,143,119      100.00
+
+-----------------------------------------------------------------------------------------------------
+-> exp_cat = PE = 2
+
+exp_neg_val |      Freq.     Percent        Cum.
+------------+-----------------------------------
+          2 |    739,218      100.00      100.00
+------------+-----------------------------------
+      Total |    739,218      100.00
+
+-----------------------------------------------------------------------------------------------------
+-> exp_cat = PE = 3
+
+exp_neg_val |      Freq.     Percent        Cum.
+------------+-----------------------------------
+          3 |    607,056      100.00      100.00
+------------+-----------------------------------
+      Total |    607,056      100.00
+
+-----------------------------------------------------------------------------------------------------
+-> exp_cat = PE = 4
+
+exp_neg_val |      Freq.     Percent        Cum.
+------------+-----------------------------------
+          4 |    552,730      100.00      100.00
+------------+-----------------------------------
+      Total |    552,730      100.00
+
+-----------------------------------------------------------------------------------------------------
+-> exp_cat = PE = 5
+
+exp_neg_val |      Freq.     Percent        Cum.
+------------+-----------------------------------
+          5 |    531,653      100.00      100.00
+------------+-----------------------------------
+      Total |    531,653      100.00
+
+-----------------------------------------------------------------------------------------------------
+-> exp_cat = PE = 6
+
+exp_neg_val |      Freq.     Percent        Cum.
+------------+-----------------------------------
+          6 |    527,448      100.00      100.00
+------------+-----------------------------------
+      Total |    527,448      100.00
+
+-----------------------------------------------------------------------------------------------------
+-> exp_cat = PE = 7
+
+exp_neg_val |      Freq.     Percent        Cum.
+------------+-----------------------------------
+          7 |    525,333      100.00      100.00
+------------+-----------------------------------
+      Total |    525,333      100.00
+
+-----------------------------------------------------------------------------------------------------
+-> exp_cat = PE = 8
+
+exp_neg_val |      Freq.     Percent        Cum.
+------------+-----------------------------------
+          8 |    525,124      100.00      100.00
+------------+-----------------------------------
+      Total |    525,124      100.00
+
+-----------------------------------------------------------------------------------------------------
+-> exp_cat = PE = 9
+
+exp_neg_val |      Freq.     Percent        Cum.
+------------+-----------------------------------
+          9 |    523,282      100.00      100.00
+------------+-----------------------------------
+      Total |    523,282      100.00
+
+-----------------------------------------------------------------------------------------------------
+-> exp_cat = 10 $\leq$ PE < 15
+
+exp_neg_val |      Freq.     Percent        Cum.
+------------+-----------------------------------
+         10 |    526,912       19.69       19.69
+         11 |    532,125       19.88       39.57
+         12 |    539,695       20.16       59.73
+         13 |    539,357       20.15       79.88
+         14 |    538,604       20.12      100.00
+------------+-----------------------------------
+      Total |  2,676,693      100.00
+
+-----------------------------------------------------------------------------------------------------
+-> exp_cat = 15 $\leq$ PE < 19
+
+exp_neg_val |      Freq.     Percent        Cum.
+------------+-----------------------------------
+         15 |    544,040       19.54       19.54
+         16 |    552,788       19.85       39.39
+         17 |    558,489       20.05       59.44
+         18 |    564,705       20.28       79.72
+         19 |    564,853       20.28      100.00
+------------+-----------------------------------
+      Total |  2,784,875      100.00
+
+-----------------------------------------------------------------------------------------------------
+-> exp_cat = 20 $\leq$ PE < 24
+
+exp_neg_val |      Freq.     Percent        Cum.
+------------+-----------------------------------
+         20 |    572,273       19.74       19.74
+         21 |    577,679       19.93       39.67
+         22 |    585,234       20.19       59.86
+         23 |    581,251       20.05       79.92
+         24 |    582,064       20.08      100.00
+------------+-----------------------------------
+      Total |  2,898,501      100.00
+
+-----------------------------------------------------------------------------------------------------
+-> exp_cat = 25 $\leq$ PE < 29
+
+exp_neg_val |      Freq.     Percent        Cum.
+------------+-----------------------------------
+         25 |    582,472       20.25       20.25
+         26 |    581,048       20.20       40.46
+         27 |    575,836       20.02       60.48
+         28 |    572,009       19.89       80.37
+         29 |    564,609       19.63      100.00
+------------+-----------------------------------
+      Total |  2,875,974      100.00
+
+-----------------------------------------------------------------------------------------------------
+-> exp_cat = 30 $\leq$ PE < 34
+
+exp_neg_val |      Freq.     Percent        Cum.
+------------+-----------------------------------
+         30 |    559,373       20.65       20.65
+         31 |    551,940       20.38       41.03
+         32 |    548,415       20.25       61.27
+         33 |    531,947       19.64       80.91
+         34 |    517,181       19.09      100.00
+------------+-----------------------------------
+      Total |  2,708,856      100.00
+
+-----------------------------------------------------------------------------------------------------
+-> exp_cat = 35 $\leq$ PE < 39
+
+exp_neg_val |      Freq.     Percent        Cum.
+------------+-----------------------------------
+         35 |    506,413       21.03       21.03
+         36 |    495,053       20.56       41.59
+         37 |    481,391       19.99       61.58
+         38 |    471,147       19.57       81.15
+         39 |    453,943       18.85      100.00
+------------+-----------------------------------
+      Total |  2,407,947      100.00
+
+-----------------------------------------------------------------------------------------------------
+-> exp_cat = 40 $\leq$ PE < 44
+
+exp_neg_val |      Freq.     Percent        Cum.
+------------+-----------------------------------
+         40 |    439,083       21.43       21.43
+         41 |    424,913       20.74       42.17
+         42 |    410,532       20.04       62.21
+         43 |    394,549       19.26       81.47
+         44 |    379,607       18.53      100.00
+------------+-----------------------------------
+      Total |  2,048,684      100.00
+
+-----------------------------------------------------------------------------------------------------
+-> exp_cat = PE $\geq$ 45
+
+exp_neg_val |      Freq.     Percent        Cum.
+------------+-----------------------------------
+         45 |    363,863        8.28        8.28
+         46 |    351,997        8.01       16.29
+         47 |    342,230        7.79       24.07
+         48 |    326,532        7.43       31.50
+         49 |    309,746        7.05       38.55
+         50 |    298,851        6.80       45.34
+         51 |    285,424        6.49       51.84
+         52 |    275,566        6.27       58.11
+         53 |    261,658        5.95       64.06
+         54 |    250,523        5.70       69.76
+         55 |    231,810        5.27       75.03
+         56 |    222,927        5.07       80.10
+         57 |    192,156        4.37       84.47
+         58 |    183,062        4.16       88.64
+         59 |    168,485        3.83       92.47
+         60 |    132,306        3.01       95.48
+         61 |     52,489        1.19       96.68
+         62 |     44,102        1.00       97.68
+         63 |     35,461        0.81       98.49
+         64 |     28,055        0.64       99.12
+         65 |     11,224        0.26       99.38
+         66 |     10,472        0.24       99.62
+         67 |      5,326        0.12       99.74
+         68 |      5,274        0.12       99.86
+         69 |      1,610        0.04       99.90
+         70 |      1,555        0.04       99.93
+         71 |      1,567        0.04       99.97
+         72 |      1,456        0.03      100.00
+------------+-----------------------------------
+      Total |  4,395,727      100.00
+
+  0
+(est1 stored)
+
+added macro:
+               e(samp) : "All"
+(est2 stored)
+
+added macro:
+               e(samp) : "Employed"
+(est3 stored)
+
+added macro:
+               e(samp) : "Unemployed"
+(est4 stored)
+
+added macro:
+               e(samp) : "NILF"
+
+-----------------------------------------------------------------------------------------------------
+> ---
+                                                  (1)             (2)             (3)             (4)
+>    
+-----------------------------------------------------------------------------------------------------
+> ---
+PE < 0 X U.\ rate                              -0.198***      -0.0479          -1.577***       -0.278
+> ***
+                                             (0.0345)        (0.0348)         (0.158)        (0.0443)
+>    
+
+PE = 0 X U.\ rate                              -0.265***       -0.106***       -1.757***       -0.330
+> ***
+                                             (0.0194)        (0.0185)        (0.0763)        (0.0291)
+>    
+
+PE = 1 X U.\ rate                              -0.223***      -0.0878***       -1.638***       -0.312
+> ***
+                                             (0.0167)        (0.0167)        (0.0835)        (0.0253)
+>    
+
+PE = 2 X U.\ rate                              -0.144***      -0.0567***       -1.627***       -0.311
+> ***
+                                             (0.0168)        (0.0162)        (0.0830)        (0.0332)
+>    
+
+PE = 3 X U.\ rate                             -0.0758***      -0.0295          -1.705***       -0.258
+> ***
+                                             (0.0173)        (0.0155)        (0.0910)        (0.0487)
+>    
+
+PE = 4 X U.\ rate                             -0.0711***      -0.0405**        -1.745***       -0.260
+> ***
+                                             (0.0149)        (0.0136)         (0.103)        (0.0457)
+>    
+
+PE = 5 X U.\ rate                             -0.0532**       -0.0101          -1.739***       -0.318
+> ***
+                                             (0.0167)        (0.0148)         (0.107)        (0.0447)
+>    
+
+PE = 6 X U.\ rate                             -0.0566***      -0.0378**        -1.764***       -0.265
+> ***
+                                             (0.0136)        (0.0123)         (0.101)        (0.0441)
+>    
+
+PE = 7 X U.\ rate                             -0.0384*        -0.0383**        -1.564***       -0.199
+> ***
+                                             (0.0152)        (0.0137)         (0.113)        (0.0461)
+>    
+
+PE = 8 X U.\ rate                             -0.0310*        -0.0192          -1.650***       -0.188
+> ***
+                                             (0.0138)        (0.0118)         (0.107)        (0.0409)
+>    
+
+PE = 9 X U.\ rate                             -0.0238        -0.00980          -1.522***       -0.212
+> ***
+                                             (0.0153)        (0.0129)         (0.149)        (0.0459)
+>    
+
+10 $\leq$ PE < 15 X U.\ rate                 -0.00550        -0.00352          -1.477***       -0.133
+> ***
+                                            (0.00714)       (0.00546)        (0.0632)        (0.0206)
+>    
+
+15 $\leq$ PE < 19 X U.\ rate                  0.00358         0.00577          -1.476***      -0.0850
+> ***
+                                            (0.00642)       (0.00496)        (0.0698)        (0.0212)
+>    
+
+20 $\leq$ PE < 24 X U.\ rate                   0.0196**        0.0206***       -1.354***       -0.109
+> ***
+                                            (0.00594)       (0.00502)        (0.0636)        (0.0186)
+>    
+
+25 $\leq$ PE < 29 X U.\ rate                   0.0135*         0.0118*         -1.165***      -0.0731
+> ***
+                                            (0.00634)       (0.00463)        (0.0616)        (0.0197)
+>    
+
+30 $\leq$ PE < 34 X U.\ rate                   0.0153*         0.0163**        -1.145***      -0.0148
+>    
+                                            (0.00642)       (0.00515)        (0.0624)        (0.0153)
+>    
+
+35 $\leq$ PE < 39 X U.\ rate                   0.0117          0.0245***       -1.171***     -0.00106
+>    
+                                            (0.00605)       (0.00545)        (0.0665)        (0.0129)
+>    
+
+40 $\leq$ PE < 44 X U.\ rate                  0.00986          0.0221***       -0.987***       0.0212
+>    
+                                            (0.00676)       (0.00603)        (0.0818)        (0.0125)
+>    
+
+PE $\geq$ 45 X U.\ rate                      -0.00257         0.00656          -0.978***       0.0445
+> ***
+                                            (0.00565)       (0.00589)        (0.0899)       (0.00757)
+>    
+-----------------------------------------------------------------------------------------------------
+> ---
+Sample                                            All        Employed      Unemployed            NILF
+>    
+r2                                             0.0462          0.0245           0.251          0.0719
+>    
+N                                            14887472         9712396          559554         4615522
+>    
+-----------------------------------------------------------------------------------------------------
+> ---
+Standard errors in parentheses
+* p<0.05, ** p<0.01, *** p<0.001
+(output written to C:\Users\jcrechet\Dropbox\Applications\Overleaf\Forsythe (2021) - Replication\Tabl
+> es\MSA\tableb2.tex)
+(est1 stored)
+
+added macro:
+               e(samp) : "All"
+
+added scalar:
+                  e(w) =  181.35728
+(est2 stored)
+
+added macro:
+               e(samp) : "Employed"
+
+added scalar:
+                  e(w) =  74.593317
+(est3 stored)
+
+added macro:
+               e(samp) : "Unemployed"
+
+added scalar:
+                  e(w) =  126.85513
+(est4 stored)
+
+added macro:
+               e(samp) : "NILF"
+
+added scalar:
+                  e(w) =  184.62438
+
+---------------------------------------------------------------------------------------------------
+                                             (1)             (2)             (3)             (4)   
+---------------------------------------------------------------------------------------------------
+PE $\leq$ 10                               3.932***        1.781***        6.783***        7.463***
+                                        (0.0807)        (0.0590)         (0.375)         (0.212)   
+
+PE $\leq$ 10 X U.\ rate                   -0.114***      -0.0432***       -1.658***       -0.293***
+                                       (0.00711)       (0.00605)        (0.0456)        (0.0175)   
+
+PE $>$ 10 X U.\ rate                     0.00648          0.0135***       -1.266***      0.00523   
+                                       (0.00400)       (0.00289)        (0.0418)       (0.00748)   
+---------------------------------------------------------------------------------------------------
+Sample                                       All        Employed      Unemployed            NILF   
+Wald test                                  181.4           74.59           126.9           184.6   
+r2                                       0.00909         0.00427          0.0428          0.0210   
+N                                       14887472         9712396          559554         4615522   
+---------------------------------------------------------------------------------------------------
+Standard errors in parentheses
+* p<0.05, ** p<0.01, *** p<0.001
+(output written to C:\Users\jcrechet\Dropbox\Applications\Overleaf\Forsythe (2021) - Replication\Tabl
+> es\MSA\table2.tex)
+(16,321,610 missing values generated)
+(295,699 real changes made)
+(551,258 real changes made)
+(16,321,610 missing values generated)
+(165,898 real changes made)
+(16,321,610 missing values generated)
+(295,699 real changes made)
+(16,321,610 missing values generated)
+(385,360 real changes made)
+(23,229,129 missing values generated)
+(173,629 real changes made)
+(29,068,336 missing values generated)
+(177,657 real changes made)
+(est1 stored)
+
+added macro:
+               e(samp) : "Employed"
+
+added macro:
+               e(dest) : "All"
+
+added scalar:
+                  e(w) =  9.2630702
+(est2 stored)
+
+added macro:
+               e(samp) : "Employed"
+
+added macro:
+               e(dest) : "Unemp."
+
+added scalar:
+                  e(w) =  206.39382
+(est3 stored)
+
+added macro:
+               e(samp) : "Employed"
+
+added macro:
+               e(dest) : "Emp."
+
+added scalar:
+                  e(w) =  75.232018
+(est4 stored)
+
+added macro:
+               e(samp) : "Employed"
+
+added macro:
+               e(dest) : "NILF"
+
+added scalar:
+                  e(w) =  .00273404
+(est5 stored)
+
+added macro:
+               e(samp) : "NILF"
+
+added macro:
+               e(dest) : "Unemp."
+
+added scalar:
+                  e(w) =  173.11811
+(est6 stored)
+
+added macro:
+               e(samp) : "Unemp."
+
+added macro:
+               e(dest) : "NILF"
+
+added scalar:
+                  e(w) =  12.567883
+
+-----------------------------------------------------------------------------------------------------
+> ------------------------------
+                                             (1)             (2)             (3)             (4)     
+>         (5)             (6)   
+-----------------------------------------------------------------------------------------------------
+> ------------------------------
+PE $\leq$ 10                               3.982***        0.208***        1.716***        2.058***  
+>       1.576***        4.850***
+                                        (0.0897)        (0.0303)        (0.0611)        (0.0619)     
+>     (0.126)         (0.343)   
+
+PE $\leq$ 10 X U.\ rate                    0.232***        0.285***      -0.0479***     -0.00511     
+>       0.661***       -1.254***
+                                        (0.0122)       (0.00681)       (0.00612)       (0.00689)     
+>    (0.0246)        (0.0475)   
+
+PE $>$ 10 X U.\ rate                       0.192***        0.184***       0.0129***     -0.00469     
+>       0.288***       -1.410***
+                                       (0.00641)       (0.00339)       (0.00315)       (0.00400)     
+>   (0.00778)        (0.0370)   
+-----------------------------------------------------------------------------------------------------
+> ------------------------------
+Sample                                  Employed        Employed        Employed        Employed     
+>        NILF          Unemp.   
+Destination                                  All          Unemp.            Emp.            NILF     
+>      Unemp.            NILF   
+Wald test                                  9.263           206.4           75.23         0.00273     
+>       173.1           12.57   
+r2                                        0.0163         0.00686         0.00371          0.0129     
+>      0.0188          0.0408   
+N                                        9712396         9712396         9712396         9712396     
+>     4615522          559554   
+-----------------------------------------------------------------------------------------------------
+> ------------------------------
+Standard errors in parentheses
+* p<0.05, ** p<0.01, *** p<0.001
+(output written to C:\Users\jcrechet\Dropbox\Applications\Overleaf\Forsythe (2021) - Replication\Tabl
+> es\MSA\table3.tex)
+(16,321,610 missing values generated)
+(119,449 real changes made)
+(16,321,610 missing values generated)
+(19,761 real changes made)
+(est1 stored)
+
+added scalar:
+                  e(w) =  65.871105
+(est2 stored)
+
+added scalar:
+                  e(w) =  30.378007
+
+-------------------------------------------------------------------
+                                             (1)             (2)   
+-------------------------------------------------------------------
+PE $\leq$ 10                             -0.0150           0.117***
+                                        (0.0238)        (0.0111)   
+
+PE $\leq$ 10 X U.\ rate                    0.195***       0.0334***
+                                       (0.00478)       (0.00241)   
+
+PE $>$ 10 X U.\ rate                       0.153***       0.0204***
+                                       (0.00379)      (0.000918)   
+-------------------------------------------------------------------
+Wald test                                  65.87           30.38   
+r2                                       0.00521         0.00129   
+N                                        9712396         9712396   
+-------------------------------------------------------------------
+Standard errors in parentheses
+* p<0.05, ** p<0.01, *** p<0.001
+(output written to C:\Users\jcrechet\Dropbox\Applications\Overleaf\Forsythe (2021) - Replication\Tabl
+> es\MSA\table4.tex)
+
+. 
+. **
+. 
+. log close
+      name:  <unnamed>
+       log:  C:\Users\jcrechet\Dropbox\Research\Data\Replication\Forsythe 2021\Replication_games\Logf
+> iles/2_hiring.log
+  log type:  text
+ closed on:  25 Jun 2023, 15:30:25
+-----------------------------------------------------------------------------------------------------

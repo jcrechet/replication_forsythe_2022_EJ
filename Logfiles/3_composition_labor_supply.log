@@ -1,0 +1,662 @@
+----------------------------------------------------------------------------------------------------------------------------------
+      name:  <unnamed>
+       log:  C:\Users\18814\Dropbox\Forsythe 2021\Replication_games\Logfiles/3_composition_labor_supply.log
+  log type:  text
+ opened on:  13 Jun 2023, 07:23:13
+
+. 
+. * data
+. use Data/3_labor_supply_composition, clear
+
+. 
+. * options for regressions with fixed effects
+. set matsize 2000
+set matsize ignored.
+    Matrix sizes are no longer limited by c(matsize) in modern Statas.  Matrix sizes are now limited by edition of Stata.  See 
+    limits for more details.
+
+. set emptycells drop
+
+. 
+. ** 
+. 
+. * Initialize macro and variables
+. 
+. * latex path for tables
+. global table_path = "$latex_path\Tables"
+
+. 
+. 
+. forvalues step = 1(1)3 {
+  2. 
+. di " "
+  3. di "****************"
+  4. di " "
+  5. di "Step `step'" 
+  6. di " "
+  7. di "****************"
+  8. di " "
+  9. 
+. * step 1: regression with initial sample in paper (1994-2014)
+. 
+. if `step' == 1 { 
+ 10.         
+.         local sample = "sample"
+ 11.         local urate = "urate_ours"
+ 12.         local clust_var = "statefip"
+ 13.         local geo_fe = "statefip"
+ 14.         
+.         * latex path
+.         global table_path = "$latex_path\Tables\LAUS"
+ 15.         
+.         * string for latex table label
+.         global tab_lbl = "original(LAUS)"
+ 16. 
+. }
+ 17. ** 
+. 
+. * step 2: run regression with our sample (1994-2019) 
+. if `step' == 2 {
+ 18.                 
+.         * update sample
+.         local sample = "oursample"
+ 19.         local urate = "urate_ours"
+ 20.         local clust_var = "statefip"
+ 21.         local geo_fe = "statefip"
+ 22. 
+.         * latex path
+.         global table_path = "$latex_path\Tables\2019"
+ 23. 
+.         * string for latex table label
+.         global tab_lbl = "2019"
+ 24. 
+. }
+ 25. 
+. **
+. 
+. * step 3: use MSA variation instead of State
+. if `step' == 3 {
+ 26. 
+.         * update sample
+.         replace sample = (sample & urate_msa != .)
+ 27.         local sample = "sample"
+ 28.         
+.         * update unemp. variable
+.         local urate = "urate_msa" 
+ 29.         
+.         * update variable for geo fixed effect
+.         local geo_fe = "metarea" 
+ 30.         
+.         * update variable for clustering (msa instead of state)
+.         local clust_var = "metarea"
+ 31.         
+.         * geographic unit label
+.         global geo "MSA"
+ 32.         
+.         * latex path
+.         global table_path = "$latex_path\Tables\MSA"
+ 33.         
+.         * string for latex table label
+.         global tab_lbl = "MSA"
+ 34. 
+. }
+ 35. 
+. di " "
+ 36. di "latex path for tables:"
+ 37. di "$table_path"
+ 38. di " "
+ 39. 
+. ** 
+. 
+. * Table 5
+. 
+.         qui reg exp `urate' i.`geo_fe' i.date i.demographic if `sample' & d_hired==100 [w=weights], vce(cl `clust_var') cformat(
+> %9.4f)
+ 40.         eststo t5_1
+ 41.         
+.         qui reg exp `urate' i.`geo_fe' i.date i.demographic i.occ1990 i.ind1990 if `sample' & d_hired==100 [w=weights], vce(cl `
+> clust_var') cformat(%9.4f)
+ 42.         eststo t5_2
+ 43. 
+.         * stata table 
+.         esttab t5_?, keep(`urate') se stats(r2 N) label varwidth(35) nonumbers nomtitles ///
+>         indicate("Occupation fixed effects = *.occ1990" "Industry fixed effects = *.ind1990") // 'estout' can add p-values if ne
+> ccessary
+ 44.         
+.         * latex table
+.         esttab t5_? using "$table_path\table5.tex", keep(`urate') se stats(r2 N) label varwidth(35) nonumbers nomtitles ///
+>         indicate("Occupation fixed effects = *.occ1990" "Industry fixed effects = *.ind1990") replace /// 
+>         booktabs title("Average Potential Experience of Hires \label{table5:$tab_lbl}") 
+ 45. 
+. 
+. * Table 6 
+. 
+. * Panel A: all individuals
+. 
+.         qui reg exp `urate' i.`geo_fe' i.date i.demographic [w=weights] if `sample', vce(cluster `clust_var') cformat(%9.4f)
+ 46.         eststo t6_pA_1
+ 47.         qui reg exp `urate' i.`geo_fe' i.date i.demographic [w=weights] if `sample' & (L.empstat>=10 & L.empstat<=12), vce(cl
+> uster `clust_var') cformat(%9.4f)
+ 48.         eststo t6_pA_2
+ 49.         qui reg exp `urate' i.`geo_fe' i.date i.demographic [w=weights] if `sample' & (L.empstat>=21 & L.empstat<=22), vce(cl
+> uster `clust_var') cformat(%9.4f)
+ 50.         eststo t6_pA_3
+ 51.         qui reg exp `urate' i.`geo_fe' i.date i.demographic [w=weights] if `sample' & (L.empstat>=32 & L.empstat<=36), vce(cl
+> uster `clust_var') cformat(%9.4f)
+ 52.         eststo t6_pA_4
+ 53.         
+.         * stata table 
+.         di "table 6 panel A "
+ 54.         esttab t6_pA_?, keep(`urate') se r2 label nonumbers nomtitles // 'estout' can add p-values if neccessary
+ 55.         
+.         * latex table
+.         esttab t6_pA_? using "$table_path\table6.tex", keep(`urate') se stats(r2 N) label varwidth(35) nonumbers nomtitles repla
+> ce /// 
+>         booktabs title("Potential Experience within Cells \label{table6:$tab_lbl}") 
+ 56.         
+. 
+. * Panel B: newly hired
+. 
+.         gen empstat_l=L.empstat
+ 57.         di "sample size of different types of new hires"
+ 58.         tab empstat_l if d_hired==100 & `sample'
+ 59.         drop empstat_l
+ 60. 
+.         qui reg exp `urate' i.`geo_fe' i.date i.demographic [w=weights] if `sample' & d_hired==100, vce(cluster `clust_var') cfo
+> rmat(%9.4f)
+ 61.         eststo t6_pB_1
+ 62.         qui reg exp `urate' i.`geo_fe' i.date i.demographic [w=weights] if `sample' & d_hired==100 & (L.empstat>=10 & L.empst
+> at<=12), vce(cluster `clust_var') cformat(%9.4f)
+ 63.         eststo t6_pB_2
+ 64.         qui reg exp `urate' i.`geo_fe' i.date i.demographic [w=weights] if `sample' & d_hired==100 & (L.empstat>=21 & L.empst
+> at<=22), vce(cluster `clust_var') cformat(%9.4f)
+ 65.         eststo t6_pB_3
+ 66.         qui reg exp `urate' i.`geo_fe' i.date i.demographic [w=weights] if `sample' & d_hired==100 & (L.empstat>=32 & L.empst
+> at<=36), vce(cluster `clust_var') cformat(%9.4f)
+ 67.         eststo t6_pB_4
+ 68.         
+.         * stata table 
+.         di "table 6 panel B"
+ 69.         esttab t6_pB_?, keep(`urate') se r2 label nonumbers nomtitles // 'estout' can add p-values if neccessary
+ 70.         
+.         * latex table
+.         esttab t6_pB_? using "$table_path\table6.tex", keep(`urate') se stats(r2 N) label varwidth(35) nonumbers nomtitles appen
+> d
+ 71.         
+. 
+. 
+. * Panel C 
+. 
+. * counts of each cells 
+.         gen exp_hired=exp if d_hired==100 
+ 72. 
+.         gen hired_emp = (d_hired==100 & L.empstat >= 10 & L.empstat <= 12)
+ 73.         gen hired_unemp = (d_hired==100 & L.empstat >= 21 & L.empstat <= 22)
+ 74.         gen hired_nilf = (d_hired==100 & L.empstat >= 32 & L.empstat <= 36)
+ 75. 
+. foreach count in emp unemp nilf{
+ 76.         egen hired_`count'_total = total(hired_`count'), by(`clust_var' date)
+ 77. }
+ 78. 
+. *want to exclude the cells that didn't have at least one hire in all 3 categories in the cell
+.         gen missing_hires_cell = 0
+ 79.         replace missing_hires_cell = 1 if (hired_emp_total == 0 | hired_unemp_total ==0 | hired_nilf_total==0)
+ 80. 
+.         egen mhc=max(missing_hires_cell), by(`clust_var' date)
+ 81. 
+. /* column 1 */
+. preserve
+ 82. 
+. keep if `sample' 
+ 83. drop if mhc==1
+ 84. 
+. keep `urate' exp exp_hired `clust_var' date mhc weights
+ 85. collapse `urate' exp exp_hired [w=weights], by(`clust_var' date)
+ 86. 
+. gen exp_ratio = exp_hired/exp
+ 87. 
+. qui reg exp_ratio `urate' i.`geo_fe' i.date, vce(cluster `clust_var') cformat(%9.4f)
+ 88. eststo t6_pC_1
+ 89. estadd local samp "All"
+ 90. 
+. restore
+ 91. 
+. /* column 2 */
+. preserve
+ 92. 
+. keep if `sample' 
+ 93. keep if (L.empstat>=10 & L.empstat<=12)
+ 94. drop if mhc==1 //want to drop state-month-year-cells that dont have hiring in all 3 categories
+ 95. 
+. keep `urate' exp exp_hired `clust_var' date weights
+ 96. collapse `urate' exp exp_hired [w=weights], by(`clust_var' date)
+ 97. 
+. gen exp_ratio = exp_hired/exp
+ 98. 
+. qui reg exp_ratio `urate' i.`geo_fe' i.date, vce(cluster `clust_var') cformat(%9.4f)
+ 99. eststo t6_pC_2
+100. estadd local samp "Employed"
+101. 
+. restore
+102. 
+. /* column 3 */
+. preserve
+103. 
+. keep if `sample' 
+104. keep if (L.empstat>=21 & L.empstat<=22)
+105. 
+. drop if mhc==1 //want to drop state-month-year-cells that dont have hiring in all 3 categories
+106. 
+. keep `urate' exp exp_hired `clust_var' date weights
+107. collapse `urate' exp exp_hired [w=weights], by(`clust_var' date)
+108. 
+. gen exp_ratio = exp_hired/exp
+109. 
+. qui reg exp_ratio `urate' i.`geo_fe' i.date, vce(cluster `clust_var') cformat(%9.4f)
+110. eststo t6_pC_3
+111. estadd local samp "Unemployed"
+112. 
+. restore
+113. 
+. /* column 4 */
+. preserve
+114. 
+. keep if `sample' 
+115. keep if (L.empstat>=32 & L.empstat<=36)
+116. drop if mhc==1 //want to drop state-month-year-cells that dont have hiring in all 3 categoriess
+117. 
+. keep `urate' exp exp_hired `clust_var' date weights
+118. collapse `urate' exp exp_hired [w=weights], by(`clust_var' date)
+119. 
+. gen exp_ratio = exp_hired/exp
+120. 
+. qui reg exp_ratio `urate' i.`geo_fe' i.date, vce(cluster `clust_var') cformat(%9.4f)
+121. eststo t6_pC_4
+122. estadd local samp "NILF"
+123. 
+. restore
+124. 
+. drop exp_hired hired_* *_total missing_hires_cell mhc
+125. 
+. di "table 6 panel C"
+126. 
+. esttab t6_pC_*, keep(`urate' _cons) se r2 nomtitles star(* 0.05 ** 0.01 *** 0.001)
+127. 
+. esttab t6_pC_? using "$table_path\table6.tex", keep(`urate') se stats(samp r2 N, label("Sample" "$ R^2 $" "N")) /// 
+> label varwidth(35) nonumbers nomtitles append
+128. 
+. }
+ 
+****************
+ 
+Step 1
+ 
+****************
+ 
+ 
+latex path for tables:
+C:\Users\18814\OneDrive\桌面\fun learnings\replication game\Forsythe_2021\Tables\LAUS
+ 
+
+-------------------------------------------------------------------
+-------------------------------------------------------------------
+unemployment rate from LAUS                0.132**         0.114** 
+                                        (0.0470)        (0.0400)   
+
+Occupation fixed effects                      No             Yes   
+
+Industry fixed effects                        No             Yes   
+-------------------------------------------------------------------
+r2                                        0.0686           0.182   
+N                                         564604          564604   
+-------------------------------------------------------------------
+Standard errors in parentheses
+* p<0.05, ** p<0.01, *** p<0.001
+(file C:\Users\18814\OneDrive\桌面\fun learnings\replication game\Forsythe_2021\Tables\LAUS\table5.tex not found)
+(output written to C:\Users\18814\OneDrive\桌面\fun learnings\replication game\Forsythe_2021\Tables\LAUS\table5.tex)
+table 6 panel A 
+
+------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------
+unemployment rate ~S      -0.0111          0.0388           0.179**        -0.136** 
+                         (0.0277)        (0.0200)        (0.0514)        (0.0472)   
+------------------------------------------------------------------------------------
+Observations             16309862        10591956          631214         5086692   
+R-squared                   0.047           0.040           0.063           0.084   
+------------------------------------------------------------------------------------
+Standard errors in parentheses
+* p<0.05, ** p<0.01, *** p<0.001
+(output written to C:\Users\18814\OneDrive\桌面\fun learnings\replication game\Forsythe_2021\Tables\LAUS\table6.tex)
+(9,014,756 missing values generated)
+sample size of different types of new hires
+
+  empstat_l |      Freq.     Percent        Cum.
+------------+-----------------------------------
+         10 |    202,634       35.89       35.89
+         12 |      9,253        1.64       37.53
+         21 |    132,812       23.52       61.05
+         22 |      7,412        1.31       62.36
+         32 |     10,759        1.91       64.27
+         34 |    174,153       30.85       95.11
+         36 |     27,581        4.89      100.00
+------------+-----------------------------------
+      Total |    564,604      100.00
+table 6 panel B
+
+------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------
+unemployment rate ~S        0.132**         0.167***        0.251***       0.0313   
+                         (0.0470)        (0.0452)        (0.0581)        (0.0956)   
+------------------------------------------------------------------------------------
+Observations               564604          211887          140224          212493   
+R-squared                   0.069           0.058           0.062           0.110   
+------------------------------------------------------------------------------------
+Standard errors in parentheses
+* p<0.05, ** p<0.01, *** p<0.001
+(output written to C:\Users\18814\OneDrive\桌面\fun learnings\replication game\Forsythe_2021\Tables\LAUS\table6.tex)
+(29,314,352 missing values generated)
+(434,569 real changes made)
+(13,723,688 observations deleted)
+(13,249 observations deleted)
+(analytic weights assumed)
+
+added macro:
+               e(samp) : "All"
+(13,723,688 observations deleted)
+(9,670,735 observations deleted)
+(5,468 observations deleted)
+(analytic weights assumed)
+(32 missing values generated)
+
+added macro:
+               e(samp) : "Employed"
+(13,723,688 observations deleted)
+(15,932,221 observations deleted)
+(243 observations deleted)
+(analytic weights assumed)
+(131 missing values generated)
+
+added macro:
+               e(samp) : "Unemployed"
+(13,723,688 observations deleted)
+(13,099,380 observations deleted)
+(2,839 observations deleted)
+(analytic weights assumed)
+(23 missing values generated)
+
+added macro:
+               e(samp) : "NILF"
+table 6 panel C
+
+----------------------------------------------------------------------------
+                      (1)             (2)             (3)             (4)   
+----------------------------------------------------------------------------
+urate_ours        0.00415*       -0.00157        0.000741         0.00435   
+                (0.00190)       (0.00317)       (0.00446)       (0.00305)   
+
+_cons               0.417***        0.695***        0.859***        0.361***
+                 (0.0163)        (0.0353)        (0.0709)        (0.0332)   
+----------------------------------------------------------------------------
+N                   12018           11884           11785           11893   
+R-sq                0.264           0.083           0.041           0.124   
+----------------------------------------------------------------------------
+Standard errors in parentheses
+* p<0.05, ** p<0.01, *** p<0.001
+(output written to C:\Users\18814\OneDrive\桌面\fun learnings\replication game\Forsythe_2021\Tables\LAUS\table6.tex)
+ 
+****************
+ 
+Step 2
+ 
+****************
+ 
+ 
+latex path for tables:
+C:\Users\18814\OneDrive\桌面\fun learnings\replication game\Forsythe_2021\Tables\2019
+ 
+
+-------------------------------------------------------------------
+-------------------------------------------------------------------
+unemployment rate from LAUS                0.117**         0.101** 
+                                        (0.0398)        (0.0340)   
+
+Occupation fixed effects                      No             Yes   
+
+Industry fixed effects                        No             Yes   
+-------------------------------------------------------------------
+r2                                        0.0698           0.181   
+N                                         697709          697709   
+-------------------------------------------------------------------
+Standard errors in parentheses
+* p<0.05, ** p<0.01, *** p<0.001
+(output written to C:\Users\18814\OneDrive\桌面\fun learnings\replication game\Forsythe_2021\Tables\2019\table5.tex)
+table 6 panel A 
+
+------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------
+unemployment rate ~S      -0.0244          0.0381*          0.178***       -0.157***
+                         (0.0229)        (0.0157)        (0.0484)        (0.0353)   
+------------------------------------------------------------------------------------
+Observations             20729625        13341766          756726         6631133   
+R-squared                   0.047           0.041           0.063           0.086   
+------------------------------------------------------------------------------------
+Standard errors in parentheses
+* p<0.05, ** p<0.01, *** p<0.001
+(output written to C:\Users\18814\OneDrive\桌面\fun learnings\replication game\Forsythe_2021\Tables\2019\table6.tex)
+(9,014,756 missing values generated)
+sample size of different types of new hires
+
+  empstat_l |      Freq.     Percent        Cum.
+------------+-----------------------------------
+         10 |    244,551       35.05       35.05
+         12 |     10,960        1.57       36.62
+         21 |    160,030       22.94       59.56
+         22 |      9,346        1.34       60.90
+         32 |     14,405        2.06       62.96
+         34 |    221,404       31.73       94.70
+         36 |     37,013        5.30      100.00
+------------+-----------------------------------
+      Total |    697,709      100.00
+table 6 panel B
+
+------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------
+unemployment rate ~S        0.117**         0.172***        0.253***     -0.00182   
+                         (0.0398)        (0.0445)        (0.0568)        (0.0762)   
+------------------------------------------------------------------------------------
+Observations               697709          255511          169376          272822   
+R-squared                   0.070           0.057           0.063           0.110   
+------------------------------------------------------------------------------------
+Standard errors in parentheses
+* p<0.05, ** p<0.01, *** p<0.001
+(output written to C:\Users\18814\OneDrive\桌面\fun learnings\replication game\Forsythe_2021\Tables\2019\table6.tex)
+(29,314,352 missing values generated)
+(434,569 real changes made)
+(9,303,925 observations deleted)
+(29,029 observations deleted)
+(analytic weights assumed)
+
+added macro:
+               e(samp) : "All"
+(9,303,925 observations deleted)
+(12,376,426 observations deleted)
+(12,048 observations deleted)
+(analytic weights assumed)
+(46 missing values generated)
+
+added macro:
+               e(samp) : "Employed"
+(9,303,925 observations deleted)
+(20,277,189 observations deleted)
+(374 observations deleted)
+(analytic weights assumed)
+(230 missing values generated)
+
+added macro:
+               e(samp) : "Unemployed"
+(9,303,925 observations deleted)
+(16,540,220 observations deleted)
+(6,036 observations deleted)
+(analytic weights assumed)
+(26 missing values generated)
+
+added macro:
+               e(samp) : "NILF"
+table 6 panel C
+
+----------------------------------------------------------------------------
+                      (1)             (2)             (3)             (4)   
+----------------------------------------------------------------------------
+urate_ours        0.00488**     -0.000974         0.00171         0.00488   
+                (0.00165)       (0.00298)       (0.00429)       (0.00275)   
+
+_cons               0.413***        0.688***        0.836***        0.362***
+                 (0.0152)        (0.0352)        (0.0675)        (0.0329)   
+----------------------------------------------------------------------------
+N                   15365           15217           15033           15237   
+R-sq                0.248           0.075           0.038           0.122   
+----------------------------------------------------------------------------
+Standard errors in parentheses
+* p<0.05, ** p<0.01, *** p<0.001
+(output written to C:\Users\18814\OneDrive\桌面\fun learnings\replication game\Forsythe_2021\Tables\2019\table6.tex)
+ 
+****************
+ 
+Step 3
+ 
+****************
+ 
+(4,592,363 real changes made)
+ 
+latex path for tables:
+C:\Users\18814\OneDrive\桌面\fun learnings\replication game\Forsythe_2021\Tables\MSA
+ 
+
+-------------------------------------------------------------------
+-------------------------------------------------------------------
+urate_msa                                 0.0270*         0.0240*  
+                                        (0.0131)        (0.0122)   
+
+Occupation fixed effects                      No             Yes   
+
+Industry fixed effects                        No             Yes   
+-------------------------------------------------------------------
+r2                                        0.0749           0.186   
+N                                         409670          409670   
+-------------------------------------------------------------------
+Standard errors in parentheses
+* p<0.05, ** p<0.01, *** p<0.001
+(output written to C:\Users\18814\OneDrive\桌面\fun learnings\replication game\Forsythe_2021\Tables\MSA\table5.tex)
+table 6 panel A 
+
+------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------
+urate_msa                 -0.0175**        0.0113*         0.0168         -0.0420***
+                        (0.00531)       (0.00452)        (0.0120)        (0.0104)   
+------------------------------------------------------------------------------------
+Observations             11717499         7658464          466931         3592104   
+R-squared                   0.053           0.044           0.073           0.097   
+------------------------------------------------------------------------------------
+Standard errors in parentheses
+* p<0.05, ** p<0.01, *** p<0.001
+(output written to C:\Users\18814\OneDrive\桌面\fun learnings\replication game\Forsythe_2021\Tables\MSA\table6.tex)
+(9,014,756 missing values generated)
+sample size of different types of new hires
+
+  empstat_l |      Freq.     Percent        Cum.
+------------+-----------------------------------
+         10 |    147,360       35.97       35.97
+         12 |      6,478        1.58       37.55
+         21 |     94,798       23.14       60.69
+         22 |      5,553        1.36       62.05
+         32 |      7,754        1.89       63.94
+         34 |    128,996       31.49       95.43
+         36 |     18,731        4.57      100.00
+------------+-----------------------------------
+      Total |    409,670      100.00
+table 6 panel B
+
+------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------
+urate_msa                  0.0270*         0.0365*         0.0126          0.0315   
+                         (0.0131)        (0.0179)        (0.0204)        (0.0264)   
+------------------------------------------------------------------------------------
+Observations               409670          153838          100351          155481   
+R-squared                   0.075           0.067           0.076           0.116   
+------------------------------------------------------------------------------------
+Standard errors in parentheses
+* p<0.05, ** p<0.01, *** p<0.001
+(output written to C:\Users\18814\OneDrive\桌面\fun learnings\replication game\Forsythe_2021\Tables\MSA\table6.tex)
+(29,314,352 missing values generated)
+(5,855,450 real changes made)
+(18,316,051 observations deleted)
+(2,908,494 observations deleted)
+(analytic weights assumed)
+(1 missing value generated)
+
+added macro:
+               e(samp) : "All"
+(18,316,051 observations deleted)
+(6,928,872 observations deleted)
+(1,178,593 observations deleted)
+(analytic weights assumed)
+(2,861 missing values generated)
+
+added macro:
+               e(samp) : "Employed"
+(18,316,051 observations deleted)
+(11,437,978 observations deleted)
+(64,360 observations deleted)
+(analytic weights assumed)
+(3,388 missing values generated)
+
+added macro:
+               e(samp) : "Unemployed"
+(18,316,051 observations deleted)
+(9,456,958 observations deleted)
+(590,229 observations deleted)
+(analytic weights assumed)
+(2,779 missing values generated)
+
+added macro:
+               e(samp) : "NILF"
+table 6 panel C
+
+----------------------------------------------------------------------------
+                      (1)             (2)             (3)             (4)   
+----------------------------------------------------------------------------
+urate_msa         0.00165         0.00246        -0.00462*      0.0000330   
+               (0.000867)       (0.00178)       (0.00212)       (0.00172)   
+
+_cons               0.425***        0.578***        0.804***        0.295***
+                 (0.0177)        (0.0503)        (0.0521)        (0.0332)   
+----------------------------------------------------------------------------
+N                   22108           19007           17791           19085   
+R-sq                0.116           0.061           0.043           0.074   
+----------------------------------------------------------------------------
+Standard errors in parentheses
+* p<0.05, ** p<0.01, *** p<0.001
+(output written to C:\Users\18814\OneDrive\桌面\fun learnings\replication game\Forsythe_2021\Tables\MSA\table6.tex)
+
+. 
+. ** 
+. 
+. /* Notes. 
+> 
+> 1. alternative demographics can be defined as the folowing, however, the estimates don't differ significantly when holding diffe
+> rent demographic fixed effects. 
+> 
+>         gen minority = (race > 100)                // 100 == white 
+>         gen female = (sex==2 )
+>         gen hisp1 = (hisp>0 & hisp<901)            // hispanic descent or not
+>         egen demo2 = group(minority female hisp1 educg)
+>         egen demo3 = group(minority female hisp1)
+> */
+. 
+. 
+. log close
+      name:  <unnamed>
+       log:  C:\Users\18814\Dropbox\Forsythe 2021\Replication_games\Logfiles/3_composition_labor_supply.log
+  log type:  text
+ closed on:  13 Jun 2023, 08:15:26
+----------------------------------------------------------------------------------------------------------------------------------

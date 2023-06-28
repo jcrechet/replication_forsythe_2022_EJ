@@ -1,0 +1,29 @@
+\begin{table}[htbp]\centering
+\def\sym#1{\ifmmode^{#1}\else\(^{#1}\)\fi}
+\caption{Hiring over the Business Cycle: With and Without Controls - Disaggregated by potential experience (Panel B)}
+\begin{tabular}{l*{4}{c}}
+\hline\hline
+                                   &\multicolumn{1}{c}{(1)}         &\multicolumn{1}{c}{(2)}         &\multicolumn{1}{c}{(3)}         &\multicolumn{1}{c}{(4)}         \\
+\hline
+PE $\leq$ 10                       &       5.361\sym{***}&       5.362\sym{***}&       5.259\sym{***}&       5.267\sym{***}\\
+                                   &     (0.103)         &     (0.105)         &     (0.102)         &     (0.102)         \\
+[1em]
+PE $\leq$ 10 $\times$ State Unem. rate&      -0.330\sym{***}&      -0.351\sym{***}&      -0.348\sym{***}&      -0.247\sym{***}\\
+                                   &    (0.0150)         &    (0.0143)         &    (0.0142)         &    (0.0141)         \\
+[1em]
+PE $>$ 10 $\times$ State Unem. rate&     -0.0437\sym{***}&     -0.0638\sym{***}&     -0.0592\sym{***}&      0.0424\sym{***}\\
+                                   &    (0.0110)         &   (0.00801)         &   (0.00858)         &    (0.0103)         \\
+[1em]
+State fixed effect                 &          No         &         Yes         &         Yes         &         Yes         \\
+[1em]
+Demographic fixed effect           &          No         &          No         &         Yes         &         Yes         \\
+[1em]
+Month-year fixed effect            &          No         &          No         &          No         &         Yes         \\
+\hline
+Observations                       &    16309862         &    16309862         &    16309862         &    16309862         \\
+\(R^{2}\)                          &       0.008         &       0.008         &       0.009         &       0.010         \\
+\hline\hline
+\multicolumn{5}{l}{\footnotesize Standard errors in parentheses}\\
+\multicolumn{5}{l}{\footnotesize \sym{*} \(p<0.05\), \sym{**} \(p<0.01\), \sym{***} \(p<0.001\)}\\
+\end{tabular}
+\end{table}
