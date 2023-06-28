@@ -19,7 +19,7 @@ Raw data obtained from IPUMS CPS (IPUMS-CPS, University of Minnesota, www.ipums.
 
 # Instructions:
 1. Go to [...] and download the file data_replication_forsythe_2021.7z.
-2. Download the content of the repository.
-3. Uncompress the content of the .7z data file in the folder "Data"
+2. Download the content of the repository https://github.com/jcrechet/replication_forsythe_2021_EJ.
+3. Create a local folder named "Data" in the Stata working directory. Uncompress the content of the .7z data file in this folder.
 4. Open the Stata do file "0_main.do" and specify the macro for the local Stata directory path and Latex table path.
 5. Run the dofile "0_main.do".
