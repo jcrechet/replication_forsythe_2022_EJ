@@ -4,7 +4,8 @@
 
 **
 
-* Program: 0_laus_data
+* Program: 0b_laus_data
+* Prepare LAUS unemployment statistics for merging with CPS IPUMS micro data.
 
 **
 
