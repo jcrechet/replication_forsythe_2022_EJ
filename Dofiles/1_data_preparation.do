@@ -5,6 +5,7 @@
 **
 
 * Program: 1_data_preparation, last edited June 21, 2023
+* Produces final_dataset.dta, working dataset for the regression analysis.
 
 **
 
@@ -13,7 +14,7 @@ capture log close
 log using Logfiles/1_data_preparation, text replace
  
 * load data
-use Data/cps_00036, clear
+use Data/cps_00038, clear
 
 **
 
@@ -231,8 +232,8 @@ use Data/intermediate_data, clear
 
 #delimit ;
 global variables = "cpsidp date year month statefip metfips metarea age sex race hispan educgroup empstat classwkr empsame
-				    sample sample_2019 weights d_hired urate exp exp_neg exp_flag exp_group urate_msa n_msa demographic whyunemp occ1990 ind1990
-					eligorg earnweek_cpiu_2010 occ1990 ind1990";
+				    sample sample_2019 weights d_hired urate exp exp_neg exp_flag exp_group urate_msa n_msa demographic whyunemp
+					eligorg earnweek_cpiu_2010 occ1990 ind1990 qearn";
 #delimit cr
 
 di "$variables"

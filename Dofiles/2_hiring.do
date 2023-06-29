@@ -5,8 +5,10 @@
 **
 
 * Program: 2_hiring, last edited June 21, 2023
-* modified on Jun 12th (line 31-33, 45, 48) to replace the urate with local area urate, (line 231-232, 350, 388) to re-generate variables in the loop. 
 * Description: replication of section 2 (direct replicationd and robsutness)
+* step 1: sample 1995-2015, state urate
+* step 2: 1995-2019, state urate
+* step 3: 1995-2019, MSA urate
 
 **
 
@@ -40,6 +42,9 @@ global geo "State"
 * latex path for tables
 global table_path = "$latex_path\Tables"
 
+* macro for latex table label
+global label = ""
+
 
 forvalues step = 1(1)3 {
 
@@ -62,6 +67,9 @@ if `step' == 2 {
 
 	* latex path
 	global table_path = "$latex_path\Tables\2019"
+	
+	* latex table label
+	global label = ":2019"
 
 }
 
@@ -88,6 +96,9 @@ if `step' == 3 {
 	
 	* latex path
 	global table_path = "$latex_path\Tables\MSA"
+	
+	* latex table label
+	global label = ":msa"
 
 }
 
@@ -123,7 +134,7 @@ esttab, keep(urate) se r2 nomtitles label varwidth(35) ///
 * latex table
 esttab using "$table_path\table1a.tex", replace keep(urate) se r2 nomtitles label varwidth(35) ///
 	   indicate("State fixed effect = *.geo_fe" "Demographic fixed effect = *.demographic" "Month-year fixed effect = *.date") ///
-	   title("Hiring over the Business Cycle: With and Without Controls - Aggregate effect \label{table1a}") nomtitles
+	   title("Hiring over the Business Cycle: With and Without Controls - Aggregate effect \label{table1a$label}") nomtitles
 	   								
 
 * Panel B
@@ -150,7 +161,7 @@ esttab, keep(*.exp_group*) se r2 nomtitles label varwidth(35) order(1.exp_group 
 esttab using "$table_path\table1b.tex", replace keep(*.exp_group*) se r2 nomtitles label ///
 	   varwidth(35) order(1.exp_group 1.exp_group#c.urate 0.exp_group#c.urate) interaction(" $\times$ ") ///		
 	   indicate("State fixed effect = *.geo_fe" "Demographic fixed effect = *.demographic" "Month-year fixed effect = *.date") ///
-	   title("Hiring over the Business Cycle: With and Without Controls - Disaggregated by potential experience \label{table1b}") booktabs ///
+	   title("Hiring over the Business Cycle: With and Without Controls - Disaggregated by potential experience \label{table1b$label}") booktabs ///
 										
 **
 			 
@@ -209,7 +220,7 @@ esttab, keep(*.exp_cat#*) se stat(samp r2 N, label("Sample")) nomtitles label va
 
 * latex table
 esttab using "$table_path\tableb2.tex", replace keep(*.exp_cat#*) se stat(samp r2 N, label("Sample" "$ R^2 $")) label nomtitles  ///
-	   interaction(" $\times$ ") varwidth(40) title("Hiring Over the Business Cycle: Detailed Potential Experience Categories \label{tableB2}") booktabs
+	   interaction(" $\times$ ") varwidth(40) title("Hiring Over the Business Cycle: Detailed Potential Experience Categories \label{tableB2$label}") booktabs
 	   
 drop exp_cat
 label drop exp_cat_lab
@@ -248,7 +259,7 @@ esttab, keep(*.exp_group*) se stats(samp w r2 N, label("Sample" "Wald test")) //
 * latex table
 esttab using "$table_path\table2.tex", replace keep(*.exp_group*) se stats(samp w r2 N, label("Sample" "Wald test" "$ R^2 $")) ///
 	   nomtitles label varwidth(35) order(1.exp_group 1.exp_group#c.urate 0.exp_group#c.urate) interaction(" $\times$ ") ///
-	   title("Hiring over the Business Cycle: Young and Experienced \label{table2}") booktabs
+	   title("Hiring over the Business Cycle: Young and Experienced \label{table2$label}") booktabs
 			 		
 					
 **
@@ -329,7 +340,7 @@ esttab, keep(*.exp_group*) se stats(samp dest w r2 N, label("Sample" "Destinatio
 * latex table
 esttab using "$table_path\table3.tex", replace keep(*.exp_group*) se stats(samp dest w r2 N, label("Sample" "Destination" "Wald test" "$ R^2 $"))   ///
 	   nomtitles label varwidth(35) order(1.exp_group 1.exp_group#c.urate 0.exp_group#c.urate) interaction(" $\times$ ") ///
-	   title("Exits and Other Flows \label{table3}") booktabs
+	   title("Exits and Other Flows \label{table3$label}") booktabs
 	
 drop d_exit d_eu d_ee d_en d_nu d_un
 	
@@ -367,7 +378,7 @@ esttab, keep(*.exp_group*) se stats(w r2 N, label("Wald test")) nomtitles label 
 esttab using "$table_path\table4.tex", replace keep(*.exp_group*) se stats(w r2 N, label("Wald test" "$ R^2 $")) label  ///
 		order(1.exp_group 1.exp_group#c.urate 0.exp_group#c.urate) ///
 		mtitles("$\Pr(\text{Involuntary}) \times 100$" "$\Pr(\text{Voluntary}) \times 100$" "(3)") interaction(" $\times$ ") ///
-		title("Involuntary and Voluntary Separations to Unemployment \label{table4}") booktabs
+		title("Involuntary and Voluntary Separations to Unemployment \label{table4$label}") booktabs
 
 drop d_eu_involuntary d_eu_voluntary
 		

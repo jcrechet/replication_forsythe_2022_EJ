@@ -1,12 +1,18 @@
 * Stata programs for replication of "Why don't firms hire young workers during recessions? by Eliza Forsythe (2021)
 * Replicators: J. Créchet, J. Cui, B. Sabada, A. Sawyer
-* May 2023
+* May 2023, updated June 2023
+
+**
+
+* program: 3_composition_labor_supply
+* replicate tables 5 and 6 (section3)
+
 
 **
 
 * log
 capture log close
-log using Logfiles/5_composition_labor_supply_j, text replace
+log using Logfiles/3_composition_labor_supply, text replace
 
 * options for regressions with fixed effects
 set matsize 2000
