@@ -1,9 +1,8 @@
--------------------------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------------------------------------------------------------
       name:  <unnamed>
-       log:  C:\Users\jcrechet\Dropbox\Research\Data\Replication\Forsythe 2021\Replication_games\Logfil
-> es/0b_laus_data.log
+       log:  D:\Dropbox\Research\Data\Replication\Forsythe 2021\Replication_games\Logfiles/0b_laus_data.log
   log type:  text
- opened on:  23 Jun 2023, 16:04:41
+ opened on:  28 Jun 2023, 15:42:43
 
 . 
 . 
@@ -123,8 +122,7 @@ value: all characters numeric; replaced as double
 measure: all characters numeric; replaced as byte
 
 . label define lab 3 "unemployment rate" 4 "unemployment" 5 "employment" 6 "labor force" ///
->                                  7 "employment-population ratio" 8 "labor force participation rate" 9
->  "civilian noninstitutional population"
+>                                  7 "employment-population ratio" 8 "labor force participation rate" 9 "civilian noninstitutional population"
 
 . label values measure lab
 
@@ -205,8 +203,7 @@ file Data/laus_state_wide.dta saved
 . 
 . log close
       name:  <unnamed>
-       log:  C:\Users\jcrechet\Dropbox\Research\Data\Replication\Forsythe 2021\Replication_games\Logfil
-> es/0b_laus_data.log
+       log:  D:\Dropbox\Research\Data\Replication\Forsythe 2021\Replication_games\Logfiles/0b_laus_data.log
   log type:  text
- closed on:  23 Jun 2023, 16:04:52
--------------------------------------------------------------------------------------------------------
+ closed on:  28 Jun 2023, 15:43:00
+----------------------------------------------------------------------------------------------------------------------------------------------
