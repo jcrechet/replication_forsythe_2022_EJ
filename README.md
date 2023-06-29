@@ -13,7 +13,7 @@ Raw data obtained from IPUMS CPS (IPUMS-CPS, University of Minnesota, www.ipums.
 # Do-file description
 0. 0b_laus_data.do: prepare LAUS data for merging with CPS micro data
 1. 1_data_preparation.do: prepare dataset for regression analysis
-2. 2_hiring.do: replicate section 2
+2. 2_hiring.do: replicate results in section 2 (direct replication and robustness analysis)
 3. 3_composition_labor_supply.do: replicate Tables 5 and 6 in section 3
 4. 4_wages.do: replicate Table 10.
 
