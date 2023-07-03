@@ -21,7 +21,7 @@ use Data/cps_00038, clear
 * 1. PANEL PREPARATION
 
 * keep age 16-79 (as in the initial code, see YH_data_init, line 134)
-keep if age >= 16 & age < 79
+keep if age >= 16 & age <= 79
 
 * date
 gen year_str = string(year)
