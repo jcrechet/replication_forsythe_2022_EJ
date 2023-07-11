@@ -36,11 +36,11 @@ eststo: qui reg exp urate i.state i.date i.demographic if sample & d_hired==100 
 eststo: qui reg exp urate i.state i.date i.demographic i.occ1990 i.ind1990 if sample & d_hired==100 [w=weights], vce(cl state) cformat(%9.4f)
 
 * stata table
-esttab, keep(urate) se stats(r2 N) label varwidth(35) nonumbers nomtitles ///
+esttab, keep(urate) p stats(r2 N) label varwidth(35) nonumbers nomtitles ///
 indicate("Occupation fixed effects = *.occ1990" "Industry fixed effects = *.ind1990")
 	
 * latex table
-esttab using "$table_path\table5.tex", keep(urate) se stats(r2 N, label("$ R^2 $")) label varwidth(35) nonumbers nomtitles ///
+esttab using "$table_path\table5.tex", keep(urate) p stats(r2 N, label("$ R^2 $")) label varwidth(35) nonumbers nomtitles ///
 indicate("Occupation fixed effects = *.occ1990" "Industry fixed effects = *.ind1990") replace /// 
 booktabs title("Average Potential Experience of Hires \label{table5}") 
 
@@ -57,10 +57,10 @@ eststo: qui reg exp urate i.state i.date i.demographic [w=weights] if sample & (
 
 * stata table 
 di "table 6 panel A"
-esttab, keep(urate) se r2 label nonumbers nomtitles
+esttab, keep(urate) p r2 label nonumbers nomtitles
 
 * latex table
-esttab  using "$table_path\table6a.tex", keep(urate) se stats(r2 N) label varwidth(35) nonumbers nomtitles replace /// 
+esttab  using "$table_path\table6a.tex", keep(urate) p stats(r2 N, label("$ R^2 $")) label varwidth(35) nonumbers nomtitles replace /// 
 booktabs title("Potential Experience within Cells (all) \label{table6a}") 
 
 * Panel B: new hires
@@ -72,10 +72,10 @@ eststo: qui reg exp urate i.state i.date i.demographic [w=weights] if sample & d
 
 * Stata table
 di "table 6 panel B"
-esttab, keep(urate) se r2 label nonumbers nomtitles
+esttab, keep(urate) p r2 label nonumbers nomtitles
 
 * latex table
-esttab  using "$table_path\table6b.tex", keep(urate) se stats(r2 N, label("$ R^2 $")) label varwidth(35) nonumbers nomtitles replace /// 
+esttab  using "$table_path\table6b.tex", keep(urate) p stats(r2 N, label("$ R^2 $")) label varwidth(35) nonumbers nomtitles replace /// 
 booktabs title("Potential Experience within Cells (new hires) \label{table6b}")
 
 **
@@ -99,6 +99,7 @@ gen ratio_nilf  = exp_hired_nilf / exp
 
 * labels
 label var ratio_all
+label var urate "U.\ rate"
 
 * regressions
 eststo  clear
@@ -109,10 +110,10 @@ eststo: qui reg ratio_nilf  urate i.state i.date, vce(cluster state) cformat(%9.
 
 * stata table 
 di "table 6 panel C"
-esttab, keep(urate) se r2 label nonumbers nomtitles
+esttab, keep(urate) p r2 label nonumbers nomtitles
 
 * latex table
-esttab  using "$table_path\table6c.tex", keep(urate) se stats(r2 N, label("$ R^2 $")) label varwidth(35) nonumbers nomtitles replace /// 
+esttab  using "$table_path\table6c.tex", keep(urate) p stats(r2 N, label("$ R^2 $")) label varwidth(35) nonumbers nomtitles replace /// 
 booktabs title("Potential Experience within Cells (ratio) \label{table6c}")
 
 **
