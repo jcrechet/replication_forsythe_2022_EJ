@@ -132,7 +132,7 @@ esttab, keep(urate) se r2 nomtitles label varwidth(35) ///
 		indicate("`geo' fixed effect = *.geo_fe" "Demographic fixed effect = *.demographic" "Month-year fixed effect = *.date")
 										
 * latex table
-esttab using "$table_path\table1a.tex", replace keep(urate) se r2 nomtitles label varwidth(35) ///
+esttab using "$table_path\table1a.tex", replace keep(urate) p r2 nomtitles label varwidth(35) ///
 	   indicate("State fixed effect = *.geo_fe" "Demographic fixed effect = *.demographic" "Month-year fixed effect = *.date") ///
 	   title("Hiring over the Business Cycle: With and Without Controls - Aggregate effect \label{table1a$label}") nomtitles
 	   								
@@ -158,7 +158,7 @@ esttab, keep(*.exp_group*) se r2 nomtitles label varwidth(35) order(1.exp_group 
 		indicate("`geo' fixed effect = *.geo_fe" "Demographic fixed effect = *.demographic" "Month-year fixed effect = *.date")
 										
 * latex table
-esttab using "$table_path\table1b.tex", replace keep(*.exp_group*) se r2 nomtitles label ///
+esttab using "$table_path\table1b.tex", replace keep(*.exp_group*) p r2 nomtitles label ///
 	   varwidth(35) order(1.exp_group 1.exp_group#c.urate 0.exp_group#c.urate) interaction(" $\times$ ") ///		
 	   indicate("State fixed effect = *.geo_fe" "Demographic fixed effect = *.demographic" "Month-year fixed effect = *.date") ///
 	   title("Hiring over the Business Cycle: With and Without Controls - Disaggregated by potential experience \label{table1b$label}") booktabs ///
@@ -219,7 +219,7 @@ estadd local samp "NILF"
 esttab, keep(*.exp_cat#*) se stat(samp r2 N, label("Sample")) nomtitles label varwidth(40) interaction(" X ") 
 
 * latex table
-esttab using "$table_path\tableb2.tex", replace keep(*.exp_cat#*) se stat(samp r2 N, label("Sample" "$ R^2 $")) label nomtitles  ///
+esttab using "$table_path\tableb2.tex", replace keep(*.exp_cat#*) p stat(samp r2 N, label("Sample" "$ R^2 $")) label nomtitles  ///
 	   interaction(" $\times$ ") varwidth(40) title("Hiring Over the Business Cycle: Detailed Potential Experience Categories \label{tableB2$label}") booktabs
 	   
 drop exp_cat
@@ -234,30 +234,38 @@ local variables = "i1.exp_group c.urate#i1.exp_group c.urate#i0.exp_group i.geo_
 
 eststo: quietly reg d_hired `variables' [w=weight] if sample, vce(cluster clust_var) cformat(%9.4f)
 quiet test c.urate#i1.exp_group = c.urate#i0.exp_group
+local pval = r(p)
+local W = string(`pval', "%5.3f")
+estadd scalar w `W'
 estadd local samp "All"
-estadd scalar w = r(F)
 
 eststo: quietly reg d_hired `variables' [w=weight] if sample & (L.empstat>=10 & L.empstat<=12), vce(cluster clust_var) cformat(%9.4f)
 quiet test c.urate#i1.exp_group = c.urate#i0.exp_group
+local pval = r(p)
+local W = string(`pval', "%5.3f")
+estadd scalar w `W'
 estadd local samp "Employed"
-estadd scalar w = r(F)
 
 eststo: quietly reg d_hired `variables' [w=weight] if sample & (L.empstat>=21 & L.empstat<=22), vce(cluster clust_var) cformat(%9.4f)
 quiet test c.urate#i1.exp_group = c.urate#i0.exp_group
+local pval = r(p)
+local W = string(`pval', "%5.3f")
+estadd scalar w `W'
 estadd local samp "Unemployed"
-estadd scalar w = r(F)
 
 eststo: quietly reg d_hired `variables' [w=weight] if sample & (L.empstat>=32 & L.empstat<=36), vce(cluster clust_var) cformat(%9.4f)
 quiet test c.urate#i1.exp_group = c.urate#i0.exp_group
+local pval = r(p)
+local W = string(`pval', "%5.3f")
+estadd scalar w `W'
 estadd local samp "NILF"
-estadd scalar w = r(F)
 
 * Stata table
-esttab, keep(*.exp_group*) se stats(samp w r2 N, label("Sample" "Wald test")) ///
+esttab, keep(*.exp_group*) se stats(samp w r2 N, label("Sample" "Wald test (p-value)") fmt(3)) ///
 		nomtitles label varwidth(35) order(1.exp_group 1.exp_group#c.urate 0.exp_group#c.urate) interaction(" X ")
 
 * latex table
-esttab using "$table_path\table2.tex", replace keep(*.exp_group*) se stats(samp w r2 N, label("Sample" "Wald test" "$ R^2 $")) ///
+esttab using "$table_path\table2.tex", replace keep(*.exp_group*) p stats(samp w r2 N, label("Sample" "Wald test (p-value)" "$ R^2 $") fmt(3)) ///
 	   nomtitles label varwidth(35) order(1.exp_group 1.exp_group#c.urate 0.exp_group#c.urate) interaction(" $\times$ ") ///
 	   title("Hiring over the Business Cycle: Young and Experienced \label{table2$label}") booktabs
 			 		
@@ -299,46 +307,58 @@ eststo  clear
 
 eststo: quiet reg d_exit i1.exp_group c.urate#i1.exp_group c.urate#i0.exp_group i.geo_fe i.demographic i.date if sample, vce(cluster clust_var) cformat(%9.4f)
 quiet test c.urate#i1.exp_group = c.urate#i0.exp_group
+local pval = r(p)
+local W = string(`pval', "%5.3f")
+estadd scalar w `W'
 estadd local samp "Employed"
 estadd local dest "All"
-estadd scalar w = r(F)
 
 eststo: quiet reg d_eu i1.exp_group c.urate#i1.exp_group c.urate#i0.exp_group i.geo_fe i.demographic i.date if sample, vce(cluster clust_var) cformat(%9.4f)
 quiet test c.urate#i1.exp_group = c.urate#i0.exp_group
+local pval = r(p)
+local W = string(`pval', "%5.3f")
+estadd scalar w `W'
 estadd local samp "Employed"
 estadd local dest "Unemp."
-estadd scalar w = r(F)
 
 eststo: quiet reg d_ee i1.exp_group c.urate#i1.exp_group c.urate#i0.exp_group i.geo_fe i.demographic i.date if sample, vce(cluster clust_var) cformat(%9.4f)
 quiet test c.urate#i1.exp_group = c.urate#i0.exp_group
+local pval = r(p)
+local W = string(`pval', "%5.3f")
+estadd scalar w `W'
 estadd local samp "Employed"
 estadd local dest "Emp."
-estadd scalar w = r(F)
 
 eststo: quiet reg d_en i1.exp_group c.urate#i1.exp_group c.urate#i0.exp_group i.geo_fe i.demographic i.date if sample, vce(cluster clust_var) cformat(%9.4f)
 quiet test c.urate#i1.exp_group = c.urate#i0.exp_group
+local pval = r(p)
+local W = string(`pval', "%5.3f")
+estadd scalar w `W'
 estadd local samp "Employed"
 estadd local dest "NILF"
-estadd scalar w = r(F)
 
 eststo: quiet reg d_nu i1.exp_group c.urate#i1.exp_group c.urate#i0.exp_group i.geo_fe i.demographic i.date if sample, vce(cluster clust_var) cformat(%9.4f)
 quiet test c.urate#i1.exp_group = c.urate#i0.exp_group
+local pval = r(p)
+local W = string(`pval', "%5.3f")
+estadd scalar w `W'
 estadd local samp "NILF"
 estadd local dest "Unemp."
-estadd scalar w = r(F)
 
 eststo: quiet reg d_un i1.exp_group c.urate#i1.exp_group c.urate#i0.exp_group i.geo_fe i.demographic i.date if sample, vce(cluster clust_var) cformat(%9.4f)
 quiet test c.urate#i1.exp_group = c.urate#i0.exp_group
+local pval = r(p)
+local W = string(`pval', "%5.3f")
+estadd scalar w `W'
 estadd local samp "Unemp."
 estadd local dest "NILF"
-estadd scalar w = r(F)
 
 * Stata table
-esttab, keep(*.exp_group*) se stats(samp dest w r2 N, label("Sample" "Destination" "Wald test")) ///
+esttab, keep(*.exp_group*) se stats(samp dest w r2 N, label("Sample" "Destination" "Wald test (p-value)") fmt(3)) ///
 		nomtitles label varwidth(35) order(1.exp_group 1.exp_group#c.urate 0.exp_group#c.urate) interaction(" X ")
 
 * latex table
-esttab using "$table_path\table3.tex", replace keep(*.exp_group*) se stats(samp dest w r2 N, label("Sample" "Destination" "Wald test" "$ R^2 $"))   ///
+esttab using "$table_path\table3.tex", replace keep(*.exp_group*) p stats(samp dest w r2 N, label("Sample" "Destination" "Wald test (p-value)" "$ R^2 $") fmt(3))   ///
 	   nomtitles label varwidth(35) order(1.exp_group 1.exp_group#c.urate 0.exp_group#c.urate) interaction(" $\times$ ") ///
 	   title("Exits and Other Flows \label{table3$label}") booktabs
 	
@@ -364,18 +384,22 @@ local variables = "i1.exp_group c.urate#i1.exp_group c.urate#i0.exp_group i.geo_
 
 eststo: quietly reg d_eu_involuntary `variables' [w=weight] if sample, vce(cluster clust_var) cformat(%9.4f)
 quiet test c.urate#i1.exp_group = c.urate#i0.exp_group
-estadd scalar w = r(F)
+local pval = r(p)
+local W = string(`pval', "%5.3f")
+estadd scalar w `W'
 
 eststo: quietly reg d_eu_voluntary `variables' [w=weight] if sample, vce(cluster clust_var) cformat(%9.4f)
 quiet test c.urate#i1.exp_group = c.urate#i0.exp_group
-estadd scalar w = r(F)
+local pval = r(p)
+local W = string(`pval', "%5.3f")
+estadd scalar w `W'
 
 * Stata table
-esttab, keep(*.exp_group*) se stats(w r2 N, label("Wald test")) nomtitles label varwidth(35) ///
+esttab, keep(*.exp_group*) se stats(w r2 N, label("Wald test (p-value)") fmt(3)) nomtitles label varwidth(35) ///
 		order(1.exp_group 1.exp_group#c.urate 0.exp_group#c.urate) interaction(" X ")
 		
 * latex table
-esttab using "$table_path\table4.tex", replace keep(*.exp_group*) se stats(w r2 N, label("Wald test" "$ R^2 $")) label  ///
+esttab using "$table_path\table4.tex", replace keep(*.exp_group*) p stats(w r2 N, label("Wald test (p-value)" "$ R^2 $") fmt(3)) label  ///
 		order(1.exp_group 1.exp_group#c.urate 0.exp_group#c.urate) ///
 		mtitles("$\Pr(\text{Involuntary}) \times 100$" "$\Pr(\text{Voluntary}) \times 100$" "(3)") interaction(" $\times$ ") ///
 		title("Involuntary and Voluntary Separations to Unemployment \label{table4$label}") booktabs
