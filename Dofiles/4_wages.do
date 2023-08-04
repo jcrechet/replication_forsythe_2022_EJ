@@ -64,10 +64,10 @@ eststo: qui reg ln_w urate `fe' if sample & d_hired==100 & (L.empstat>=32 & L.em
 estadd local samp "NILF"
 
 * Stata table
-esttab, keep(urate) se r2 label nomtitles varwidth(35) 
+esttab, keep(urate) p r2 label nomtitles varwidth(35) 
 
 * latex table
-esttab using "$table_path\table10a.tex", keep(urate) se stats(samp r2 N, label("Sample" "$ R^2 $")) label nomtitles varwidth(35) replace ///
+esttab using "$table_path\table10a.tex", keep(urate) p stats(samp r2 N, label("Sample" "$ R^2 $")) label nomtitles varwidth(35) replace ///
 booktabs title("Log Wages During Recessions for New Hires - Aggregated hires \label{table10a}") 
 
 
@@ -81,33 +81,41 @@ local fe = "i.demographic i.date i.state i.occ1990 i.ind1990"
 * col (1)
 eststo: qui reg ln_w `variables' `fe' if sample & d_hired==100 [w=weight], vce(cl state) cformat(%9.4f)
 quiet test c.urate#i1.exp_group = c.urate#i0.exp_group
+local pval = r(p)
+local W = string(`pval', "%5.3f")
+estadd scalar w `W'
 estadd local samp "All"
-estadd scalar w = r(F)
 
 * col (2)
 eststo: qui reg ln_w `variables' `fe' if sample & d_hired==100 & (L.empstat>=10 & L.empstat<=12) [w=weights], vce(cl state) cformat(%9.4f)
 quiet test c.urate#i1.exp_group = c.urate#i0.exp_group
+local pval = r(p)
+local W = string(`pval', "%5.3f")
+estadd scalar w `W'
 estadd local samp "Employed"
-estadd scalar w = r(F)
 
 * col (3)
 eststo: qui reg ln_w `variables' `fe' if sample & d_hired==100 & (L.empstat>=21 & L.empstat<=22) [w=weights], vce(cl state) cformat(%9.4f)
 quiet test c.urate#i1.exp_group = c.urate#i0.exp_group
+local pval = r(p)
+local W = string(`pval', "%5.3f")
+estadd scalar w `W'
 estadd local samp "Unemployed"
-estadd scalar w = r(F)
 
 * col (4)
 eststo: qui reg ln_w `variables' `fe' if sample & d_hired==100 & (L.empstat>=32 & L.empstat<=36) [w=weights], vce(cl state) cformat(%9.4f)
 quiet test c.urate#i1.exp_group = c.urate#i0.exp_group
+local pval = r(p)
+local W = string(`pval', "%5.3f")
+estadd scalar w `W'
 estadd local samp "NILF"
-estadd scalar w = r(F)
 
 * Stata table
-esttab, keep(*.exp_group*) se stats(samp w r2 N, label("Sample" "Wald test")) ///
+esttab, keep(*.exp_group*) p stats(samp w r2 N, label("Sample" "Wald test (p-value)") fmt(3)) ///
 		nomtitles label varwidth(35) order(1.exp_group 1.exp_group#c.urate 0.exp_group#c.urate) interaction(" X ")
 
 * latex table
-esttab using "$table_path\table10b.tex", replace keep(*.exp_group*) se stats(samp w r2 N, label("Sample" "Wald test" "$ R^2 $")) ///
+esttab using "$table_path\table10b.tex", replace keep(*.exp_group*) p stats(samp w r2 N, label("Sample" "Wald test (p-value)" "$ R^2 $") fmt(3)) ///
 	   nomtitles label varwidth(35) order(1.exp_group 1.exp_group#c.urate 0.exp_group#c.urate) interaction(" $\times$ ") ///
 	   title("Hiring over the Business Cycle: Young and Experienced \label{table10b}") booktabs
 										
