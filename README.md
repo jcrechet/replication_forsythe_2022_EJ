@@ -1,11 +1,11 @@
 # replication_forsythe_2022_EJ
-Data and Stata codes for replication report for "Why firms don't hire young workers in recession" by Eliza Forsythe, Economic Journal (2022) doi: https://doi.org/10.1093/ej/ueab096.
+Data and Stata codes for replication study of "Why Don’t Firms Hire Young Workers During Recessions?" by Eliza Forsythe, Economic Journal (2022) doi: https://doi.org/10.1093/ej/ueab096.
 
 Report written by Jonathan Créchet, Jing Cui, Barbara Sabada, and Antoine Sawyer as part of the Ottawa Replication Games organized by the Institute for Replication.
 
 Raw data obtained from IPUMS CPS (IPUMS-CPS, University of Minnesota, www.ipums.org).
 
-# Instructions:
+# Instructions
 1. Go to https://doi.org/10.5281/zenodo.8095825 and download the compressed data folder data_replication_forsythe_2022.7z.
 2. Download the content of the repository https://github.com/jcrechet/replication_forsythe_2022_EJ.
 3. Create a local folder named "Data" in the desired Stata working directory. Uncompress the content of the .7z data file in this folder.
@@ -23,3 +23,4 @@ Raw data obtained from IPUMS CPS (IPUMS-CPS, University of Minnesota, www.ipums.
 2. 2_hiring.do: replicate results in section 2 (direct replication and robustness analysis)
 3. 3_composition_labor_supply.do: replicate Tables 5 and 6 in section 3
 4. 4_wages.do: replicate Table 10.
+
