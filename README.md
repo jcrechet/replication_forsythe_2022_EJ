@@ -3,7 +3,7 @@ Data and Stata codes for replication study of "Why Don’t Firms Hire Young Work
 
 Report written by Jonathan Créchet (University of Ottawa), Jing Cui (University of Ottawa), Barbara Sabada (Bank of Canada), and Antoine Sawyer (Queen's University) as part of the 2022 Ottawa Replication Games organized by the Institute for Replication.
 
-Raw data obtained from IPUMS CPS (IPUMS-CPS, University of Minnesota, www.ipums.org).
+Raw data obtained from IPUMS CPS (University of Minnesota, www.ipums.org;  Flood et al (2020)).
 
 # Instructions
 1. Go to https://doi.org/10.5281/zenodo.8095825 and download the compressed data folder data_replication_forsythe_2022.7z.
