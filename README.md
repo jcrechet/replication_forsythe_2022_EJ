@@ -37,16 +37,24 @@ Flood, S., King, M., Rodgers, R., Ruggles, S., Warren, J. R. and Michael, W.: 20
 
 
 # System specs and time requirements, original study
-System Specs and Time Requirements:
 Main file: yh_data.csv (2.1 GB, 1 GB after conversion to .dta)
+
 Total data files: 2.02 GB
+
 Software: Stata 14.2
+
 Packages: parmest (SJ10-4 st0043_2) esttab (SJ14-2: st0085_2))
+
 Estimated Processing Time: (on shared 16 core UNIX server with 396 GB RAM)
+
 YH_fileconversion.do [4 minutes]
+
 YH_data_init [16.6 minutes]
+
 YH_regs.do [91 minutes]
+
 YH_appendix_tables [52 minutes]
+
 YH_appendix_figure.do [1 second]
 
 
