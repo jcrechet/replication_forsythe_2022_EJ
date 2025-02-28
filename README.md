@@ -30,14 +30,13 @@ Raw data obtained from IPUMS CPS (University of Minnesota, www.ipums.org;  Flood
 
 # References
 Forsythe, E.: 2022, Why Don’t Firms Hire Young Workers During Recessions?, The Economic Journal 132(645), 1765–1789.
-
 Flood, S., King, M., Rodgers, R., Ruggles, S., Warren, J. R. and Michael, W.: 2020, Integrated Public Use Microdata Series, Current Population Survey: Version 8.0 [dataset]. Minneapolis, MN: IPUMS. DOI: https://doi.org/10.18128/D030.V8.0.
 
-# Time Requirements
+# System specs and time requirements 
 
 
 
-Original study: 
+# System specs and time requirements, original study
 System Specs and Time Requirements:
 Main file: yh_data.csv (2.1 GB, 1 GB after conversion to .dta)
 Total data files: 2.02 GB
