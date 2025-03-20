@@ -36,7 +36,8 @@ Flood, S., King, M., Rodgers, R., Ruggles, S., Warren, J. R. and Michael, W.: 20
 
 
 
-# System specs and time requirements, original study
+Original study (see Read me file available at https://zenodo.org/records/5710784)
+
 Main file: yh_data.csv (2.1 GB, 1 GB after conversion to .dta)
 
 Total data files: 2.02 GB
