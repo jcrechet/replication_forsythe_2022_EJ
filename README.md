@@ -6,12 +6,9 @@ Report written by Jonathan Créchet (University of Ottawa), Jing Cui (University
 Raw data obtained from IPUMS CPS (University of Minnesota, www.ipums.org;  Flood et al (2020)) and from original author's Zenodo repository at https://zenodo.org/records/5710784.
 
 # Instructions
-1. Go to https://doi.org/10.5281/zenodo.8095825 and download the compressed data folder 'data_replication_forsythe_2022.7z'.  
-2. Download the content of the repository https://github.com/jcrechet/replication_forsythe_2022_EJ.
-3. Create a local folder named "Data" in the desired Stata working directory. Uncompress the content of 'data_replication_forsythe_2022.7z' in this folder.
-4. Create folders named "Logfiles", "Graphs", and "Tables" in the Stata directory. Create three subfolders: "Tables/2019", "Tables/MSA", and "Tables/original".
-5. Open the Stata do file "0_main.do" and specify the global macro for the user's local Stata directory path.
-6. Run the dofile "0_main.do".
+1. Go to https://doi.org/10.5281/zenodo.8095825 and download the compressed data folder 'replication_crechet_cui_sadaba_sawyer_2025.7z'.  
+2. Open the Stata do file "0_main.do" and specify the global macro for the user's local Stata directory path.
+3. Run the dofile "0_main.do".
 
 # Data file content
 1. IPUMS_CPS/fipcode_cps and IPUMS_CPS/msa_code_cps: State and MSA fips
